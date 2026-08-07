@@ -1201,6 +1201,54 @@ section {
   text-decoration: underline;
 }
 
+/* ---------- Listado de desarrolladoras ---------- */
+
+.developer-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 22px;
+}
+
+.developer-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 14px 34px -22px rgba(11, 18, 32, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.developer-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 22px 44px -20px rgba(11, 18, 32, 0.4);
+}
+
+.developer-card-name {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  color: var(--text-dark);
+}
+
+.developer-card-count {
+  margin-top: 4px;
+  font-size: 0.86rem;
+  color: var(--text-muted-onlight);
+}
+
+.developer-card-arrow {
+  flex-shrink: 0;
+  font-size: 1.3rem;
+  color: var(--blue-600);
+  transition: transform 0.2s ease;
+}
+
+.developer-card:hover .developer-card-arrow {
+  transform: translateX(3px);
+}
+
 @media (max-width: 640px) {
   .results-map {
     height: 400px;

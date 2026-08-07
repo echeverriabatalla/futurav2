@@ -19,6 +19,9 @@ window.FuturaBreadcrumb = (() => {
     if (from === "resultados") {
       return { href: basePrefix + "resultados.html", label: "Resultados" };
     }
+    if (from === "desarrolladoras") {
+      return { href: basePrefix + "desarrolladoras.html", label: "Desarrolladoras" };
+    }
     if (from === "cuenta") {
       return { href: basePrefix + "mi-cuenta/comparar.html", label: "Mis tipologías" };
     }
