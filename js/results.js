@@ -20,6 +20,16 @@
 
   const PRICE_MAX = 500000;
 
+  // Un color fijo por proyecto (por id, no por posición en la lista
+  // filtrada/ordenada, para que no cambie según los filtros activos) — así
+  // se puede distinguir la isócrona de cada proyecto cuando hay varias
+  // superpuestas en el mapa.
+  const ISOCHRONE_COLORS = ["#3b66d6", "#d6573b", "#3bb8d6", "#d6b83b", "#8f3bd6", "#3bd68a", "#d63b8a", "#6b7cd6"];
+  const isochroneColorById = {};
+  PROJECTS.forEach((p, i) => {
+    isochroneColorById[p.id] = ISOCHRONE_COLORS[i % ISOCHRONE_COLORS.length];
+  });
+
   // Mismas etiquetas que usa el asistente en la pregunta de presupuesto:
   // ya no alimentan un <select>, solo sirven para convertir la respuesta
   // del asistente en un techo de precio para el slider.
@@ -422,6 +432,7 @@
 
     renderProjectList(scored, refs.length > 0);
     renderMapMarkers(scored);
+    renderSelectedIsochrone();
     renderRoutes();
   }
 
@@ -476,11 +487,11 @@
     if (!map) return;
 
     projectMarkers.forEach((m) => m.setMap(null));
-    projectPolygons.forEach((p) => p.setMap(null));
     filterPinMarkers.forEach((m) => m.setMap(null));
     projectMarkers = [];
-    projectPolygons = [];
     filterPinMarkers = [];
+    // La isócrona ya no se calcula para todos los proyectos visibles acá —
+    // solo se dibuja la del proyecto seleccionado (ver renderSelectedIsochrone).
 
     const bounds = new google.maps.LatLngBounds();
     let hasBounds = false;
@@ -505,22 +516,37 @@
       bounds.extend(project.location);
       hasBounds = true;
       addProjectMarker(project);
-      computeIsochrone(project.location, 20).then((path) => {
-        if (!path) return;
-        const polygon = new google.maps.Polygon({
-          paths: path,
-          map,
-          fillColor: "#3b66d6",
-          fillOpacity: 0.12,
-          strokeColor: "#3b66d6",
-          strokeOpacity: 0.55,
-          strokeWeight: 1.5,
-        });
-        projectPolygons.push(polygon);
-      });
     });
 
     if (hasBounds) map.fitBounds(bounds, 60);
+  }
+
+  // La isócrona de 20 min solo se muestra para el proyecto seleccionado, con
+  // el mismo color que le corresponde en ISOCHRONE_COLORS.
+  function renderSelectedIsochrone() {
+    projectPolygons.forEach((p) => p.setMap(null));
+    projectPolygons = [];
+
+    if (!map || !selectedProject) return;
+
+    const forProject = selectedProject;
+    const color = isochroneColorById[forProject.id] || ISOCHRONE_COLORS[0];
+
+    computeIsochrone(forProject.location, 20).then((path) => {
+      // Si mientras se calculaba la isócrona el usuario ya eligió otro
+      // proyecto (o ninguno), no dibujar la de una selección vieja.
+      if (!path || selectedProject !== forProject) return;
+      const polygon = new google.maps.Polygon({
+        paths: path,
+        map,
+        fillColor: color,
+        fillOpacity: 0.12,
+        strokeColor: color,
+        strokeOpacity: 0.55,
+        strokeWeight: 1.5,
+      });
+      projectPolygons.push(polygon);
+    });
   }
 
   function addDot(lat, lng, color, label, scale) {
@@ -603,6 +629,7 @@
   // guardado, con su tiempo estimado de viaje.
   function selectProject(project) {
     selectedProject = project;
+    renderSelectedIsochrone();
     renderRoutes();
   }
 
