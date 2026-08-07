@@ -23,7 +23,7 @@ window.FuturaBreadcrumb = (() => {
       return { href: basePrefix + "desarrolladoras.html", label: "Desarrolladoras" };
     }
     if (from === "cuenta") {
-      return { href: basePrefix + "mi-cuenta/comparar.html", label: "Mis tipologías" };
+      return { href: basePrefix + "mi-cuenta/comparar.html", label: "Mis proyectos" };
     }
     if (from === "desarrolladora") {
       const search = new URLSearchParams({ dev: params.get("dev") || "" });

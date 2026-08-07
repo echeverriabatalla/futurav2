@@ -23,7 +23,7 @@
   window.FuturaBreadcrumb.render({
     container: document.getElementById("breadcrumb-slot"),
     basePrefix: "../",
-    currentLabel: "Mis tipologías",
+    currentLabel: "Mis proyectos",
     fallback: { href: "../resultados.html", label: "Resultados" },
   });
 
