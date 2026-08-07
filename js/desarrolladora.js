@@ -37,6 +37,11 @@
     document.getElementById("dev-stat-years").textContent = new Date().getFullYear() - dev.foundedYear;
     document.getElementById("dev-stat-active").textContent = projects.length;
 
+    document.getElementById("account-link").href = window.FuturaBreadcrumb.withOrigin("mi-cuenta/comparar.html", "desarrolladora", {
+      dev: dev.slug,
+      fromLabel: dev.name,
+    });
+
     window.FuturaBreadcrumb.render({
       container: document.getElementById("breadcrumb-slot"),
       currentLabel: dev.name,
