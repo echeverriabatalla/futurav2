@@ -93,7 +93,8 @@ a {
 
 .logo {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
+  gap: 0.28em;
   font-family: var(--font-wordmark);
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -101,6 +102,13 @@ a {
   text-transform: uppercase;
   white-space: nowrap;
   color: var(--navy-900);
+}
+
+.logo-mark {
+  flex-shrink: 0;
+  width: 0.7em;
+  height: 0.7em;
+  color: var(--gold-500);
 }
 
 .logo--onDark {
