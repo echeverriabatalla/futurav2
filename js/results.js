@@ -49,6 +49,7 @@
   const filtersNoteEl = document.getElementById("filters-note");
   const zoneSelect = document.getElementById("filter-zone");
   const typeSelect = document.getElementById("filter-type");
+  const developerSelect = document.getElementById("filter-developer");
   const bedroomsSelect = document.getElementById("filter-bedrooms");
   const priceMinInput = document.getElementById("filter-price-min");
   const priceMaxInput = document.getElementById("filter-price-max");
@@ -59,6 +60,13 @@
   const routesPanelTitleEl = document.getElementById("routes-panel-title");
 
   const zoneOptions = Array.from(new Set(PROJECTS.map((p) => p.zone)));
+  const developerOptions = [];
+  const seenDeveloperSlugs = new Set();
+  PROJECTS.forEach((p) => {
+    if (seenDeveloperSlugs.has(p.developer.slug)) return;
+    seenDeveloperSlugs.add(p.developer.slug);
+    developerOptions.push({ slug: p.developer.slug, name: p.developer.name });
+  });
 
   // El perfil (núcleo familiar, ingresos, zona/trabajo/colegios del
   // asistente) solo se usa para personalizar esta página cuando se llega
@@ -66,7 +74,7 @@
   // cualquier otro camino (ej. "Explorar proyectos") es un browse en blanco.
   const cameFromAgent = new URLSearchParams(window.location.search).get("from") === "agente";
   const profile = cameFromAgent ? loadProfile() : null;
-  const filters = { zone: "", bedrooms: "0", propertyType: "", priceMin: 0, priceMax: PRICE_MAX, schools: [], workPlaces: [] };
+  const filters = { zone: "", bedrooms: "0", propertyType: "", developer: "", priceMin: 0, priceMax: PRICE_MAX, schools: [], workPlaces: [] };
   let seededFromProfile = false;
 
   renderPageCopy(profile);
@@ -298,6 +306,11 @@
     typeSelect.innerHTML = PROPERTY_TYPE_OPTIONS.map((o) => '<option value="' + o.value + '">' + o.label + "</option>").join("");
     typeSelect.value = filters.propertyType;
 
+    developerSelect.innerHTML =
+      '<option value="">Cualquier desarrolladora</option>' +
+      developerOptions.map((d) => '<option value="' + d.slug + '">' + d.name + "</option>").join("");
+    developerSelect.value = filters.developer;
+
     bedroomsSelect.innerHTML = BEDROOM_OPTIONS.map((o) => '<option value="' + o.value + '">' + o.label + "</option>").join("");
     bedroomsSelect.value = filters.bedrooms;
 
@@ -312,6 +325,12 @@
     });
     typeSelect.addEventListener("change", () => {
       filters.propertyType = typeSelect.value;
+      seededFromProfile = false;
+      updateFiltersNote();
+      applyFilters();
+    });
+    developerSelect.addEventListener("change", () => {
+      filters.developer = developerSelect.value;
       seededFromProfile = false;
       updateFiltersNote();
       applyFilters();
@@ -354,6 +373,7 @@
   function resetFilters() {
     filters.zone = "";
     filters.propertyType = "";
+    filters.developer = "";
     filters.bedrooms = "0";
     filters.priceMin = 0;
     filters.priceMax = PRICE_MAX;
@@ -362,6 +382,7 @@
     seededFromProfile = false;
     zoneSelect.value = "";
     typeSelect.value = "";
+    developerSelect.value = "";
     bedroomsSelect.value = "0";
     updatePriceUI();
     schoolsChipFilter.renderTags();
@@ -386,6 +407,7 @@
     return PROJECTS.filter((project) => {
       if (filters.zone && project.zone !== filters.zone) return false;
       if (filters.propertyType && project.propertyType !== filters.propertyType) return false;
+      if (filters.developer && project.developer.slug !== filters.developer) return false;
       if (minBedrooms && maxBedrooms(project) < minBedrooms) return false;
       if (project.priceFrom < filters.priceMin) return false;
       if (project.priceFrom > priceCeiling) return false;
