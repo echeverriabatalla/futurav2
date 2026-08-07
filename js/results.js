@@ -47,24 +47,36 @@
 
   const zoneOptions = Array.from(new Set(PROJECTS.map((p) => p.zone)));
 
-  const profile = loadProfile();
-  const filters = { zone: "", bedrooms: "0", propertyType: "", priceMin: 0, priceMax: PRICE_MAX };
+  // El perfil (núcleo familiar, ingresos, zona/trabajo/colegios del
+  // asistente) solo se usa para personalizar esta página cuando se llega
+  // acá justo después de que el asistente terminó sus preguntas — por
+  // cualquier otro camino (ej. "Explorar proyectos") es un browse en blanco.
+  const cameFromAgent = new URLSearchParams(window.location.search).get("from") === "agente";
+  const profile = cameFromAgent ? loadProfile() : null;
+  const filters = { zone: "", bedrooms: "0", propertyType: "", priceMin: 0, priceMax: PRICE_MAX, schools: [], workPlaces: [] };
   let seededFromProfile = false;
 
   renderPageCopy(profile);
   renderSummary(profile);
   seedFiltersFromProfile(profile);
+  const schoolsChipFilter = setupPlaceChipFilter("filter-schools-input", "filter-schools-tags", "schools");
+  const workChipFilter = setupPlaceChipFilter("filter-work-input", "filter-work-tags", "workPlaces");
   renderFilterControls();
 
   let map;
   let projectMarkers = [];
   let projectPolygons = [];
+  let filterPinMarkers = [];
   const infoWindow = () => new google.maps.InfoWindow();
 
   applyFilters();
 
-  loadGoogleMaps("geometry")
-    .then(initMap)
+  loadGoogleMaps("geometry,places")
+    .then(() => {
+      initMap();
+      schoolsChipFilter.activate();
+      workChipFilter.activate();
+    })
     .catch(() => {
       mapLoadingEl.textContent = "No pudimos cargar el mapa en este momento.";
     });
@@ -169,6 +181,75 @@
     return "$" + v.toLocaleString("en-US");
   }
 
+  // Filtro de selección múltiple con chips removibles, respaldado por
+  // Google Places Autocomplete — usado para Escuelas y Lugares de trabajo.
+  // El input queda deshabilitado hasta que Maps+Places terminan de cargar
+  // (activate()); mientras tanto ya se puede ver/editar lo que haya.
+  function setupPlaceChipFilter(inputId, tagsId, filterKey) {
+    const input = document.getElementById(inputId);
+    const tagsEl = document.getElementById(tagsId);
+    input.disabled = true;
+    input.dataset.placeholder = input.placeholder;
+    input.placeholder = "Cargando...";
+
+    function renderTags() {
+      tagsEl.innerHTML = "";
+      filters[filterKey].forEach((place, idx) => {
+        const tag = document.createElement("span");
+        tag.className = "chip-tag";
+
+        const label = document.createElement("span");
+        label.textContent = place.label;
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.setAttribute("aria-label", "Quitar " + place.label);
+        removeBtn.textContent = "×";
+        removeBtn.addEventListener("click", () => {
+          filters[filterKey].splice(idx, 1);
+          renderTags();
+          seededFromProfile = false;
+          updateFiltersNote();
+          applyFilters();
+        });
+
+        tag.appendChild(label);
+        tag.appendChild(removeBtn);
+        tagsEl.appendChild(tag);
+      });
+    }
+
+    renderTags();
+
+    return {
+      renderTags,
+      activate() {
+        input.disabled = false;
+        input.placeholder = input.dataset.placeholder;
+
+        const autocomplete = new google.maps.places.Autocomplete(input, {
+          componentRestrictions: { country: "cr" },
+          fields: ["geometry", "name", "formatted_address"],
+        });
+
+        autocomplete.addListener("place_changed", () => {
+          const place = autocomplete.getPlace();
+          if (!place || !place.geometry || !place.geometry.location) return;
+          filters[filterKey].push({
+            label: place.name || place.formatted_address || input.value,
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          });
+          input.value = "";
+          renderTags();
+          seededFromProfile = false;
+          updateFiltersNote();
+          applyFilters();
+        });
+      },
+    };
+  }
+
   function updatePriceUI() {
     priceMinInput.value = filters.priceMin;
     priceMaxInput.value = filters.priceMax;
@@ -248,11 +329,15 @@
     filters.bedrooms = "0";
     filters.priceMin = 0;
     filters.priceMax = PRICE_MAX;
+    filters.schools = [];
+    filters.workPlaces = [];
     seededFromProfile = false;
     zoneSelect.value = "";
     typeSelect.value = "";
     bedroomsSelect.value = "0";
     updatePriceUI();
+    schoolsChipFilter.renderTags();
+    workChipFilter.renderTags();
     updateFiltersNote();
     applyFilters();
   }
@@ -280,36 +365,49 @@
     });
   }
 
-  // El punto de referencia para el % de match: la zona activa en el filtro
-  // si hay una elegida, si no la zona geocodificada del asistente. Sin
-  // ninguna de las dos no hay con qué comparar, así que no se muestra match.
-  function getReferencePoint() {
+  // Los puntos de referencia para el % de match: la zona activa en el
+  // filtro (o si no hay ninguna elegida, la zona geocodificada del
+  // asistente) más cualquier escuela/trabajo agregado como chip. Sin
+  // ninguno de estos no hay con qué comparar, así que no se muestra match.
+  function getReferencePoints() {
+    const points = [];
+
     if (filters.zone) {
       const zoneProject = PROJECTS.find((p) => p.zone === filters.zone);
-      if (zoneProject) return zoneProject.location;
+      if (zoneProject) points.push(zoneProject.location);
+    } else if (profile && profile.zoneGeo) {
+      points.push({ lat: profile.zoneGeo.lat, lng: profile.zoneGeo.lng });
     }
-    if (profile && profile.zoneGeo) return { lat: profile.zoneGeo.lat, lng: profile.zoneGeo.lng };
-    return null;
+
+    filters.schools.forEach((s) => points.push({ lat: s.lat, lng: s.lng }));
+    filters.workPlaces.forEach((w) => points.push({ lat: w.lat, lng: w.lng }));
+
+    return points;
   }
 
   function applyFilters() {
     const filtered = getFilteredProjects();
-    const ref = getReferencePoint();
+    const refs = getReferencePoints();
 
     let scored = filtered.map((project) => ({ ...project }));
-    if (ref) {
+    if (refs.length) {
       scored = scored
-        .map((project) => ({ ...project, matchScore: computeMatchScore(project, ref) }))
+        .map((project) => ({ ...project, matchScore: computeMatchScore(project, refs) }))
         .sort((a, b) => b.matchScore - a.matchScore);
     }
 
-    renderProjectList(scored, Boolean(ref));
+    renderProjectList(scored, refs.length > 0);
     renderMapMarkers(scored);
   }
 
-  function computeMatchScore(project, ref) {
-    const distanceKm = haversineKm(ref.lat, ref.lng, project.location.lat, project.location.lng);
-    const score = 96 - distanceKm * 2.2;
+  // Promedia la distancia a todos los puntos de referencia: un proyecto
+  // "encaja" mejor cuando queda cerca de todos los lugares que importan, no
+  // solo del más cercano.
+  function computeMatchScore(project, refs) {
+    const avgKm =
+      refs.reduce((sum, ref) => sum + haversineKm(ref.lat, ref.lng, project.location.lat, project.location.lng), 0) /
+      refs.length;
+    const score = 96 - avgKm * 2.2;
     return Math.max(45, Math.min(97, Math.round(score)));
   }
 
@@ -344,8 +442,10 @@
 
     projectMarkers.forEach((m) => m.setMap(null));
     projectPolygons.forEach((p) => p.setMap(null));
+    filterPinMarkers.forEach((m) => m.setMap(null));
     projectMarkers = [];
     projectPolygons = [];
+    filterPinMarkers = [];
 
     const bounds = new google.maps.LatLngBounds();
     let hasBounds = false;
@@ -354,6 +454,17 @@
       bounds.extend({ lat: profile.zoneGeo.lat, lng: profile.zoneGeo.lng });
       hasBounds = true;
     }
+
+    filters.schools.forEach((s) => {
+      filterPinMarkers.push(addDot(s.lat, s.lng, "#a24fd6", "Colegio: " + s.label, 7));
+      bounds.extend({ lat: s.lat, lng: s.lng });
+      hasBounds = true;
+    });
+    filters.workPlaces.forEach((w) => {
+      filterPinMarkers.push(addDot(w.lat, w.lng, "#4c74e0", "Trabajo: " + w.label, 7));
+      bounds.extend({ lat: w.lat, lng: w.lng });
+      hasBounds = true;
+    });
 
     projects.forEach((project) => {
       bounds.extend(project.location);

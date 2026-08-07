@@ -1951,6 +1951,93 @@ section {
   box-shadow: 0 2px 6px rgba(11, 18, 32, 0.25);
 }
 
+/* ---------- Filtros de escuelas / trabajo (chips + Places Autocomplete) ---------- */
+
+.filter-field--chips {
+  min-width: 220px;
+}
+
+.chip-input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--bg-light-alt);
+  background: var(--bg-light);
+  border-radius: 10px;
+  padding: 7px 10px;
+  min-height: 44px;
+}
+
+.chip-input:focus-within {
+  outline: 2px solid var(--blue-500);
+  outline-offset: 1px;
+}
+
+.chip-input-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--white);
+  border: 1px solid var(--bg-light-alt);
+  border-radius: 999px;
+  padding: 4px 6px 4px 12px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  max-width: 220px;
+}
+
+.chip-tag span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chip-tag button {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-light-alt);
+  color: var(--text-onLight-soft);
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.chip-tag button:hover {
+  background: var(--blue-500);
+  color: var(--white);
+}
+
+.chip-input input[type="text"] {
+  flex: 1;
+  min-width: 90px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: var(--text-dark);
+  outline: none;
+}
+
+.chip-input input[type="text"]:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
 #no-matches-state {
   padding: 60px 0;
 }

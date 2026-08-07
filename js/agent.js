@@ -267,7 +267,10 @@
     inputArea.innerHTML = "";
     addBubble("¡Listo! Preparando tu mapa de proyectos...", "bot", true);
     setTimeout(() => {
-      window.location.href = "resultados.html";
+      // El ?from=agente es lo que le dice a resultados.html que puede mostrar
+      // la información del perfil (núcleo familiar, ingresos, prefills) — si
+      // se llega ahí por cualquier otro camino, esa info no debe aparecer.
+      window.location.href = "resultados.html?from=agente";
     }, 700);
   }
 

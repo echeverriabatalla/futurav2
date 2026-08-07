@@ -75,6 +75,20 @@
               <input type="range" id="filter-price-max" min="0" max="500000" step="10000" value="500000" aria-label="Precio máximo" />
             </div>
           </div>
+          <div class="filter-field filter-field--chips">
+            <label for="filter-schools-input">Escuelas</label>
+            <div class="chip-input" id="filter-schools-chipbox">
+              <div class="chip-input-tags" id="filter-schools-tags"></div>
+              <input type="text" id="filter-schools-input" placeholder="Buscar escuela..." autocomplete="off" />
+            </div>
+          </div>
+          <div class="filter-field filter-field--chips">
+            <label for="filter-work-input">Lugares de trabajo</label>
+            <div class="chip-input" id="filter-work-chipbox">
+              <div class="chip-input-tags" id="filter-work-tags"></div>
+              <input type="text" id="filter-work-input" placeholder="Buscar dirección de trabajo..." autocomplete="off" />
+            </div>
+          </div>
           <button type="button" class="filters-reset" id="filters-reset">Restablecer</button>
         </div>
         <p class="filters-note" id="filters-note" hidden></p>
