@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tus proyectos — FUTURA</title>
+  <meta name="description" content="Los proyectos en preventa del GAM que mejor encajan con el perfil de vida de tu familia, según FUTURA." />
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='24' fill='%230b1220'/%3E%3Cpolyline points='18,92 60,28 102,92' fill='none' stroke='%23ffffff' stroke-width='14' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='51' y='58' width='8' height='8' fill='%23c9a15a'/%3E%3Crect x='61' y='58' width='8' height='8' fill='%23c9a15a'/%3E%3Crect x='51' y='68' width='8' height='8' fill='%23c9a15a'/%3E%3Crect x='61' y='68' width='8' height='8' fill='%23c9a15a'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="site-header is-scrolled" id="site-header">
+    <div class="wrap">
+      <a href="index.html#inicio" class="logo logo--nav logo--onDark" aria-label="FUTURA — inicio">FUTURA</a>
+
+      <nav class="nav-links">
+        <a href="index.html#como-funciona">Cómo funciona</a>
+        <a href="index.html#contacto">Contacto</a>
+      </nav>
+
+      <div class="nav-cta">
+        <a href="index.html" class="btn btn-primary btn-sm">Volver al inicio</a>
+        <button class="menu-toggle" id="menu-toggle" aria-label="Abrir menú">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="results-page">
+    <!-- ===================== RESUMEN ===================== -->
+    <section class="results-hero">
+      <div class="wrap">
+        <span class="eyebrow" id="results-eyebrow">Proyectos</span>
+        <h1 id="results-title">Todos los proyectos activos</h1>
+        <p class="results-hero-lead" id="results-lead">
+          Explorá los proyectos en preventa del GAM y ajustá los filtros de ubicación, habitaciones y precio
+          según lo que buscás.
+        </p>
+
+        <div class="profile-summary" id="profile-summary"></div>
+      </div>
+    </section>
+
+    <!-- ===================== FILTROS ===================== -->
+    <section class="filters-section">
+      <div class="wrap">
+        <div class="filters-bar" id="filters-bar">
+          <div class="filter-field">
+            <label for="filter-zone">Ubicación</label>
+            <select id="filter-zone"></select>
+          </div>
+          <div class="filter-field">
+            <label for="filter-type">Tipo de propiedad</label>
+            <select id="filter-type"></select>
+          </div>
+          <div class="filter-field">
+            <label for="filter-bedrooms">Habitaciones</label>
+            <select id="filter-bedrooms"></select>
+          </div>
+          <div class="filter-field filter-field--range">
+            <label>Precio <span id="price-range-display"></span></label>
+            <div class="price-range-slider">
+              <div class="price-range-track"></div>
+              <div class="price-range-fill" id="price-range-fill"></div>
+              <input type="range" id="filter-price-min" min="0" max="500000" step="10000" value="0" aria-label="Precio mínimo" />
+              <input type="range" id="filter-price-max" min="0" max="500000" step="10000" value="500000" aria-label="Precio máximo" />
+            </div>
+          </div>
+          <button type="button" class="filters-reset" id="filters-reset">Restablecer</button>
+        </div>
+        <p class="filters-note" id="filters-note" hidden></p>
+      </div>
+    </section>
+
+    <!-- ===================== MAPA ===================== -->
+    <section class="results-map-section" id="map-section">
+      <div class="wrap">
+        <div class="map-frame">
+          <div id="results-map" class="results-map"></div>
+          <div class="map-loading" id="map-loading">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div class="map-legend">
+          <span class="legend-item"><i class="legend-dot dot-project"></i> Proyecto</span>
+          <span class="legend-item"><i class="legend-dot dot-zone"></i> Zona preferida</span>
+          <span class="legend-item"><i class="legend-dot dot-work"></i> Trabajo</span>
+          <span class="legend-item"><i class="legend-dot dot-school"></i> Colegio</span>
+          <span class="legend-item"><i class="legend-dot dot-activity"></i> Actividades</span>
+          <span class="legend-item"><i class="legend-swatch"></i> Zona a ~20 min en auto del proyecto</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== LISTADO ===================== -->
+    <section class="results-list-section">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow" id="list-eyebrow">Proyectos</span>
+          <h2 id="list-title">Todos los proyectos</h2>
+          <p>Proyectos de muestra para esta versión preliminar de FUTURA — pronto vas a ver el catálogo real del GAM aquí.</p>
+        </div>
+
+        <div class="project-list" id="project-list"></div>
+
+        <div class="results-empty" id="no-matches-state" hidden>
+          <p>No encontramos proyectos con esos filtros.</p>
+          <button type="button" class="btn btn-primary" id="no-matches-reset">Restablecer filtros</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="site-footer" id="contacto">
+    <div class="wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="index.html#inicio" class="logo logo--footer logo--onDark" aria-label="FUTURA">FUTURA</a>
+          <p>El motor de decisión inmobiliaria de Costa Rica. Espacios que entienden tu vida.</p>
+        </div>
+
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Producto</h4>
+            <a href="index.html#como-funciona">Cómo funciona</a>
+            <a href="mailto:hola@futura.cr?subject=Soy%20desarrolladora%20inmobiliaria">Para desarrolladoras</a>
+          </div>
+          <div class="footer-col">
+            <h4>Contacto</h4>
+            <a href="mailto:hola@futura.cr">hola@futura.cr</a>
+            <a href="index.html#inicio">San José, Costa Rica</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 FUTURA. Todos los derechos reservados.</span>
+        <span>Hecho con foco en el Gran Área Metropolitana.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/projects-data.js"></script>
+  <script src="js/maps-utils.js"></script>
+  <script src="js/breadcrumb-nav.js"></script>
+  <script src="js/project-card.js"></script>
+  <script src="js/results.js"></script>
+</body>
+</html>

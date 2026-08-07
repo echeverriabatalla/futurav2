@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Proyecto — FUTURA</title>
+  <meta name="description" content="Ubicación, tipologías y amenidades del proyecto." />
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='24' fill='%230b1220'/%3E%3Cpolyline points='18,92 60,28 102,92' fill='none' stroke='%23ffffff' stroke-width='14' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='51' y='58' width='8' height='8' fill='%23c9a15a'/%3E%3Crect x='61' y='58' width='8' height='8' fill='%23c9a15a'/%3E%3Crect x='51' y='68' width='8' height='8' fill='%23c9a15a'/%3E%3Crect x='61' y='68' width='8' height='8' fill='%23c9a15a'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ===================== HEADER: LOGO DE LA DESARROLLADORA ===================== -->
+  <header class="dev-header" id="dev-header">
+    <div class="wrap dev-header-inner">
+      <a href="#" class="dev-logo" id="dev-logo-link" aria-label="Ver perfil de la desarrolladora">
+        <span id="dev-logo-text">Desarrolladora</span>
+      </a>
+      <div class="dev-header-actions">
+        <a href="mi-cuenta/comparar.html" class="account-link" id="account-link">Mis tipologías</a>
+        <a href="resultados.html" class="futura-badge">
+          <span class="logo logo--footer logo--onDark" style="font-size:0.95rem;">FUTURA</span>
+        </a>
+      </div>
+    </div>
+    <div class="wrap breadcrumb-bar" id="breadcrumb-slot"></div>
+  </header>
+
+  <main id="project-main" hidden>
+    <!-- ===================== TÍTULO DEL PROYECTO ===================== -->
+    <section class="project-title-bar">
+      <div class="wrap project-title-inner">
+        <div>
+          <h1 id="project-name"></h1>
+          <p id="project-zone" class="project-title-zone"></p>
+        </div>
+        <div class="project-title-price">
+          <span id="project-price"></span>
+          <span id="project-delivery" class="project-title-delivery"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MAPA + ISÓCRONA + FILTROS POI ===================== -->
+    <section class="project-map-section">
+      <div class="wrap">
+        <div class="poi-filters" id="poi-filters"></div>
+
+        <div class="map-frame">
+          <div id="project-map" class="results-map"></div>
+          <div class="map-loading" id="project-map-loading">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div class="map-legend">
+          <span class="legend-item"><i class="legend-dot dot-project"></i> Proyecto</span>
+          <span class="legend-item"><i class="legend-swatch"></i> Zona a ~20 min en auto</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== TIPOLOGÍAS DISPONIBLES ===================== -->
+    <section class="typologies-section" id="como-funciona">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Tipologías disponibles</span>
+          <h2>Elegí la distribución que mejor encaja</h2>
+          <p>Vistas referenciales para esta versión preliminar — pronto vas a ver planos y renders reales del proyecto.</p>
+        </div>
+
+        <div class="typology-grid" id="typology-grid"></div>
+      </div>
+    </section>
+
+    <!-- ===================== AMENIDADES ===================== -->
+    <section class="amenities-section">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Amenidades</span>
+          <h2>Lo que trae el proyecto</h2>
+        </div>
+
+        <div class="amenities-grid" id="amenities-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <section class="results-empty" id="project-empty-state" hidden>
+    <div class="wrap">
+      <p>No encontramos ese proyecto.</p>
+      <a href="resultados.html" class="btn btn-primary">Volver a tus proyectos</a>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="site-footer" id="contacto">
+    <div class="wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="index.html#inicio" class="logo logo--footer logo--onDark" aria-label="FUTURA">FUTURA</a>
+          <p>El motor de decisión inmobiliaria de Costa Rica. Espacios que entienden tu vida.</p>
+        </div>
+
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Producto</h4>
+            <a href="index.html#como-funciona">Cómo funciona</a>
+            <a href="mailto:hola@futura.cr?subject=Soy%20desarrolladora%20inmobiliaria">Para desarrolladoras</a>
+          </div>
+          <div class="footer-col">
+            <h4>Contacto</h4>
+            <a href="mailto:hola@futura.cr">hola@futura.cr</a>
+            <a href="index.html#inicio">San José, Costa Rica</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 FUTURA. Todos los derechos reservados.</span>
+        <span>Hecho con foco en el Gran Área Metropolitana.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/projects-data.js"></script>
+  <script src="js/maps-utils.js"></script>
+  <script src="js/typology-visuals.js"></script>
+  <script src="js/breadcrumb-nav.js"></script>
+  <!-- Mockup temporal de auth (localStorage). Para pasar a Supabase real,
+       cambiar por: <script src="js/supabase-client.js"></script> -->
+  <script src="js/mock-auth.js"></script>
+  <script src="js/auth-modal.js"></script>
+  <script src="js/proyecto.js"></script>
+</body>
+</html>

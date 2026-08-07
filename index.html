@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FUTURA — El motor de decisión inmobiliaria de Costa Rica</title>
+  <meta name="description" content="FUTURA no es un buscador de propiedades. Es un motor de decisión de vida: contanos cómo vivís y te mostramos solo los proyectos que realmente encajan." />
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='24' fill='%230b1220'/%3E%3Cpolyline points='18,92 60,28 102,92' fill='none' stroke='%23ffffff' stroke-width='14' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='51' y='58' width='8' height='8' fill='%23c9a15a'/%3E%3Crect x='61' y='58' width='8' height='8' fill='%23c9a15a'/%3E%3Crect x='51' y='68' width='8' height='8' fill='%23c9a15a'/%3E%3Crect x='61' y='68' width='8' height='8' fill='%23c9a15a'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="site-header" id="site-header">
+    <div class="wrap">
+      <a href="#inicio" class="logo logo--nav logo--onDark" aria-label="FUTURA — inicio">FUTURA</a>
+
+      <nav class="nav-links">
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+
+      <div class="nav-cta">
+        <a href="mailto:hola@futura.cr?subject=Quiero%20unirme%20a%20FUTURA" class="btn btn-primary btn-sm">Unirme</a>
+        <button class="menu-toggle" id="menu-toggle" aria-label="Abrir menú">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- ===================== HERO ===================== -->
+    <section class="hero" id="inicio">
+      <div class="wrap hero-inner">
+        <div class="hero-dots" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+
+        <a href="#inicio" class="logo logo--hero logo--onDark" aria-label="FUTURA">FUTURA</a>
+
+        <h1>
+          No es un buscador de propiedades.<br />
+          Es tu motor de decisión de <em>vida</em>.
+        </h1>
+
+        <p class="lead">
+          Contanos cómo vivís —tu familia, tu trabajo, tus rutinas— y FUTURA te muestra
+          únicamente los proyectos en preventa que realmente encajan con vos.
+        </p>
+
+        <div class="hero-actions">
+          <button type="button" class="btn btn-primary" id="open-agent-btn">Quiero encontrar mi hogar</button>
+          <a href="resultados.html" class="btn btn-ghost">Ver todos los proyectos</a>
+        </div>
+      </div>
+
+      <div class="scroll-cue">
+        <span class="line"></span>
+        Descubrí más
+      </div>
+    </section>
+
+    <!-- ===================== VIAJE DEL USUARIO ===================== -->
+    <section class="journey" id="como-funciona">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Cómo funciona</span>
+          <h2>El viaje del usuario en 5 pasos</h2>
+          <p>
+            De contarnos cómo vivís, a decidir dónde vas a vivir. Así es como FUTURA convierte
+            una conversación en la decisión inmobiliaria más importante de tu vida.
+          </p>
+        </div>
+
+        <div class="journey-steps">
+          <article class="step-card">
+            <div class="step-connector">
+              <div class="step-num">1</div>
+              <div class="step-line"></div>
+            </div>
+            <h3>Conversación</h3>
+            <p>Describís tu familia, trabajo, rutinas y preferencias en lenguaje natural, sin llenar filtros.</p>
+            <span class="step-tag">Contanos tu vida</span>
+          </article>
+
+          <article class="step-card">
+            <div class="step-connector">
+              <div class="step-num">2</div>
+              <div class="step-line"></div>
+            </div>
+            <h3>Perfil de vida</h3>
+            <p>FUTURA construye tu perfil espacial y conductual en tiempo real a partir de esa conversación.</p>
+            <span class="step-tag">Te entendemos</span>
+          </article>
+
+          <article class="step-card">
+            <div class="step-connector">
+              <div class="step-num">3</div>
+              <div class="step-line"></div>
+            </div>
+            <h3>Mapa inteligente</h3>
+            <p>Visualizás tu zona de compatibilidad geográfica según tu tolerancia real de commute.</p>
+            <span class="step-tag">Vemos tu mapa</span>
+          </article>
+
+          <article class="step-card">
+            <div class="step-connector">
+              <div class="step-num">4</div>
+              <div class="step-line"></div>
+            </div>
+            <h3>Proyectos afines</h3>
+            <p>Solo aparecen los proyectos que superan tu umbral de compatibilidad. Nada de ruido.</p>
+            <span class="step-tag">Filtramos por vos</span>
+          </article>
+
+          <article class="step-card">
+            <div class="step-connector">
+              <div class="step-num">5</div>
+            </div>
+            <h3>Comparación y decisión</h3>
+            <p>Comparás planos, distancias y amenidades lado a lado, y decidís con datos reales.</p>
+            <span class="step-tag">Decidís mejor</span>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="site-footer" id="contacto">
+    <div class="wrap">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="#inicio" class="logo logo--footer logo--onDark" aria-label="FUTURA">FUTURA</a>
+          <p>El motor de decisión inmobiliaria de Costa Rica. Espacios que entienden tu vida.</p>
+        </div>
+
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Producto</h4>
+            <a href="#como-funciona">Cómo funciona</a>
+            <a href="mailto:hola@futura.cr?subject=Soy%20desarrolladora%20inmobiliaria">Para desarrolladoras</a>
+          </div>
+          <div class="footer-col">
+            <h4>Contacto</h4>
+            <a href="mailto:hola@futura.cr">hola@futura.cr</a>
+            <a href="#inicio">San José, Costa Rica</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 FUTURA. Todos los derechos reservados.</span>
+        <span>Hecho con foco en el Gran Área Metropolitana.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================== AGENTE FUTURA (POPUP) ===================== -->
+  <div class="agent-overlay" id="agent-overlay" hidden>
+    <div class="agent-modal" role="dialog" aria-modal="true" aria-labelledby="agent-title">
+      <header class="agent-header">
+        <div class="agent-header-id">
+          <span class="agent-avatar" aria-hidden="true">F</span>
+          <div>
+            <p class="agent-title" id="agent-title">Asistente FUTURA</p>
+            <p class="agent-subtitle" id="agent-progress-label">Pregunta 1 de 9</p>
+          </div>
+        </div>
+        <button type="button" class="agent-close" id="agent-close" aria-label="Cerrar">&times;</button>
+      </header>
+
+      <div class="agent-progress">
+        <div class="agent-progress-bar" id="agent-progress-bar"></div>
+      </div>
+
+      <div class="agent-chat" id="agent-chat"></div>
+
+      <form class="agent-composer" id="agent-composer">
+        <div class="agent-input-area" id="agent-input-area"></div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script src="js/agent.js"></script>
+</body>
+</html>
