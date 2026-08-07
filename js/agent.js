@@ -23,12 +23,17 @@
       text: "¿Dónde trabajan las personas que viven en tu hogar?",
       type: "textarea",
       placeholder: "Ej: Ella en Escazú, él trabaja remoto desde la casa",
+      // Además del texto libre, intentamos ubicar cada lugar mencionado por
+      // separado para que aparezcan como marcadores reales en el mapa —
+      // misma fuente de datos que usa el filtro "Lugares de trabajo".
+      geocodeMultiTarget: "workPlaces",
     },
     {
       key: "schools",
       text: "¿En qué colegio(s) estudian los niños o adolescentes de la familia?",
       type: "text",
       placeholder: "Ej: Country Day School",
+      geocodeMultiTarget: "schoolPlaces",
     },
     {
       key: "activities",
@@ -117,6 +122,28 @@
           })
       )
       .catch(() => null);
+  }
+
+  // El agente recolecta trabajo/colegios como prosa libre (puede describir
+  // varios lugares en una sola respuesta) — partimos por separadores obvios
+  // y geocodificamos cada fragmento por su cuenta, quedándonos solo con los
+  // que efectivamente se pudieron ubicar.
+  function splitLocationText(text) {
+    return text
+      .split(/,|;|\by\b|\n/i)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 4);
+  }
+
+  function geocodeMultiple(text) {
+    const segments = splitLocationText(text);
+    if (!segments.length) return Promise.resolve([]);
+    return Promise.all(segments.map((seg) => geocodeZone(seg))).then((results) =>
+      results
+        .map((geo) => (geo ? { label: geo.formattedAddress, lat: geo.lat, lng: geo.lng } : null))
+        .filter(Boolean)
+    );
   }
 
   function scrollChatToBottom() {
@@ -215,6 +242,18 @@
           addBubble("📍 Ubiqué tu zona: " + geo.formattedAddress, "bot", true);
         } else {
           addBubble("Tomé nota de esa zona, aunque no pude ubicarla con precisión.", "bot", true);
+        }
+        advance();
+      });
+    } else if (question.geocodeMultiTarget) {
+      const typing = showTyping();
+      geocodeMultiple(value).then((places) => {
+        typing.remove();
+        answers[question.geocodeMultiTarget] = places;
+        if (places.length) {
+          addBubble("📍 Ubiqué " + places.length + " lugar(es): " + places.map((p) => p.label).join(", "), "bot", true);
+        } else {
+          addBubble("Tomé nota, aunque no pude ubicar una dirección exacta ahí.", "bot", true);
         }
         advance();
       });

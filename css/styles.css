@@ -1034,6 +1034,61 @@ section {
   border: 1.5px solid rgba(59, 102, 214, 0.6);
 }
 
+/* ---------- Panel de rutas (proyecto -> escuelas/trabajos guardados) ---------- */
+
+.routes-panel {
+  margin-top: 4px;
+  padding: 18px 20px;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: 0 14px 34px -24px rgba(11, 18, 32, 0.35);
+}
+
+.routes-panel h3 {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0 0 12px;
+}
+
+.routes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.route-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.86rem;
+}
+
+.route-dot {
+  flex-shrink: 0;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid var(--white);
+  box-shadow: 0 0 0 1px rgba(11, 18, 32, 0.15);
+}
+
+.route-label {
+  flex: 1;
+  color: var(--text-dark);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.route-duration {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--blue-600);
+  white-space: nowrap;
+}
+
 .results-list-section {
   background: var(--bg-light);
   padding: 20px 0 120px;

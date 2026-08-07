@@ -44,6 +44,9 @@
   const priceMaxInput = document.getElementById("filter-price-max");
   const priceDisplayEl = document.getElementById("price-range-display");
   const priceFillEl = document.getElementById("price-range-fill");
+  const routesPanelEl = document.getElementById("routes-panel");
+  const routesListEl = document.getElementById("routes-list");
+  const routesPanelTitleEl = document.getElementById("routes-panel-title");
 
   const zoneOptions = Array.from(new Set(PROJECTS.map((p) => p.zone)));
 
@@ -67,6 +70,8 @@
   let projectMarkers = [];
   let projectPolygons = [];
   let filterPinMarkers = [];
+  let routePolylines = [];
+  let selectedProject = null;
   const infoWindow = () => new google.maps.InfoWindow();
 
   applyFilters();
@@ -149,6 +154,19 @@
 
     if (p.familySize) {
       filters.bedrooms = String(suggestBedrooms(p.familySize));
+      seededFromProfile = true;
+    }
+
+    // Mismo mecanismo que el filtro manual de chips: el agente ya
+    // geocodificó estos lugares por separado, así que se agregan
+    // directamente al mismo array que administra la UI de chips — el mapa
+    // no necesita saber si un lugar vino del agente o de un chip manual.
+    if (p.workPlaces && p.workPlaces.length) {
+      filters.workPlaces = p.workPlaces.slice();
+      seededFromProfile = true;
+    }
+    if (p.schoolPlaces && p.schoolPlaces.length) {
+      filters.schools = p.schoolPlaces.slice();
       seededFromProfile = true;
     }
   }
@@ -396,8 +414,15 @@
         .sort((a, b) => b.matchScore - a.matchScore);
     }
 
+    // Si el proyecto seleccionado quedó afuera del filtro, se pierde la
+    // selección (y con ella las rutas dibujadas).
+    if (selectedProject && !scored.some((p) => p.id === selectedProject.id)) {
+      selectedProject = null;
+    }
+
     renderProjectList(scored, refs.length > 0);
     renderMapMarkers(scored);
+    renderRoutes();
   }
 
   // Promedia la distancia a todos los puntos de referencia: un proyecto
@@ -428,13 +453,23 @@
       addDot(profile.zoneGeo.lat, profile.zoneGeo.lng, "#c9a15a", "Zona preferida: " + profile.zoneGeo.formattedAddress, 9);
       supportBounds.extend({ lat: profile.zoneGeo.lat, lng: profile.zoneGeo.lng });
     }
+    // Trabajo y colegios ya no se geocodifican acá aparte: el agente los
+    // escribe en filters.workPlaces/filters.schools (ver seedFiltersFromProfile),
+    // la misma fuente que alimenta los chips manuales, y renderMapMarkers()
+    // los dibuja desde ahí sin importar el origen. Actividades no tiene un
+    // filtro equivalente, así que sigue su propio camino.
     if (profile) {
-      geocodeSupportPin(profile.workLocations, "#4c74e0", "Trabajo", supportBounds);
-      geocodeSupportPin(profile.schools, "#a24fd6", "Colegio", supportBounds);
       geocodeSupportPin(profile.activities, "#2fa88f", "Actividades", supportBounds);
     }
 
-    renderMapMarkers(getFilteredProjects());
+    // No renderMapMarkers(getFilteredProjects()) acá: eso crearía marcadores
+    // sobre objetos de proyecto distintos a los que ya tiene renderizados la
+    // lista (la primera pasada de applyFilters corre antes de que exista el
+    // mapa), y project._marker quedaría wireado en el lugar equivocado —
+    // los clics en las tarjetas no encontrarían su marcador. applyFilters()
+    // reconstruye lista y mapa a partir del mismo array, así quedan
+    // sincronizados.
+    applyFilters();
   }
 
   function renderMapMarkers(projects) {
@@ -557,9 +592,89 @@
           '" style="color:#3b66d6; font-size:12px;">Ver proyecto →</a></div>'
       );
       iw.open(map, marker);
+      selectProject(project);
     });
     project._marker = marker;
     projectMarkers.push(marker);
+  }
+
+  // "Seleccionar" un proyecto (click en su marcador o en su tarjeta, que ya
+  // dispara el click del marcador) dibuja la ruta hacia cada escuela/trabajo
+  // guardado, con su tiempo estimado de viaje.
+  function selectProject(project) {
+    selectedProject = project;
+    renderRoutes();
+  }
+
+  function renderRoutes() {
+    routePolylines.forEach((p) => p.setMap(null));
+    routePolylines = [];
+    routesListEl.innerHTML = "";
+
+    if (!map || !selectedProject) {
+      routesPanelEl.hidden = true;
+      return;
+    }
+
+    const destinations = filters.schools
+      .map((s) => ({ label: s.label, lat: s.lat, lng: s.lng, kind: "Colegio", color: "#a24fd6" }))
+      .concat(filters.workPlaces.map((w) => ({ label: w.label, lat: w.lat, lng: w.lng, kind: "Trabajo", color: "#4c74e0" })));
+
+    if (!destinations.length) {
+      routesPanelEl.hidden = true;
+      return;
+    }
+
+    routesPanelEl.hidden = false;
+    routesPanelTitleEl.textContent = "Rutas desde " + selectedProject.name;
+
+    const directionsService = new google.maps.DirectionsService();
+
+    destinations.forEach((dest) => {
+      const item = document.createElement("div");
+      item.className = "route-item";
+
+      const dot = document.createElement("span");
+      dot.className = "route-dot";
+      dot.style.background = dest.color;
+
+      const label = document.createElement("span");
+      label.className = "route-label";
+      label.textContent = dest.kind + ": " + dest.label;
+
+      const duration = document.createElement("span");
+      duration.className = "route-duration";
+      duration.textContent = "Calculando...";
+
+      item.appendChild(dot);
+      item.appendChild(label);
+      item.appendChild(duration);
+      routesListEl.appendChild(item);
+
+      directionsService.route(
+        {
+          origin: selectedProject.location,
+          destination: { lat: dest.lat, lng: dest.lng },
+          travelMode: "DRIVING",
+        },
+        (result, status) => {
+          if (status !== "OK" || !result.routes[0] || !result.routes[0].legs[0]) {
+            duration.textContent = "Ruta no disponible";
+            return;
+          }
+          duration.textContent = result.routes[0].legs[0].duration.text;
+
+          const polyline = new google.maps.Polyline({
+            path: result.routes[0].overview_path,
+            map,
+            strokeColor: dest.color,
+            strokeOpacity: 0.8,
+            strokeWeight: 4,
+          });
+          routePolylines.push(polyline);
+        }
+      );
+    });
   }
 
   function renderProjectList(scored, showMatch) {
