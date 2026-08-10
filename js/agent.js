@@ -1,89 +1,57 @@
 (() => {
-  // Maps JavaScript API key — safe to ship client-side, but restrict it by
-  // HTTP referrer to this domain in Google Cloud Console, and make sure both
-  // "Maps JavaScript API" and "Geocoding API" are enabled on the project.
+  // Maps JavaScript API key — safe to ship client-side, pero restringida por
+  // HTTP referrer a este dominio en Google Cloud Console. Se usa solo para
+  // geocodificar los lugares (trabajo, colegio, zona) que la persona
+  // menciona en la charla.
   const GOOGLE_MAPS_API_KEY = "AIzaSyCp6hfATMHB75MEv_werB1IV5yNUjTu1vM";
 
-  const QUESTIONS = [
-    {
-      key: "familySize",
-      text:
-        "¡Hola! Soy el asistente de FUTURA. Te voy a hacer algunas preguntas para entender cómo vive tu familia y así encontrarte los proyectos que realmente encajan con vos.\n\n¿Cuántas personas conforman tu núcleo familiar?",
-      type: "chips",
-      options: ["1", "2", "3", "4", "5+"],
-    },
-    {
-      key: "ages",
-      text: "¿Qué edad tiene cada una de ellas?",
-      type: "text",
-      placeholder: "Ej: 38, 36, 9 y 6 años",
-    },
-    {
-      key: "workLocations",
-      text: "¿Dónde trabajan las personas que viven en tu hogar?",
-      type: "textarea",
-      placeholder: "Ej: Ella en Escazú, él trabaja remoto desde la casa",
-      // Además del texto libre, intentamos ubicar cada lugar mencionado por
-      // separado para que aparezcan como marcadores reales en el mapa —
-      // misma fuente de datos que usa el filtro "Lugares de trabajo".
-      geocodeMultiTarget: "workPlaces",
-    },
-    {
-      key: "schools",
-      text: "¿En qué colegio(s) estudian los niños o adolescentes de la familia?",
-      type: "text",
-      placeholder: "Ej: Country Day School",
-      geocodeMultiTarget: "schoolPlaces",
-    },
-    {
-      key: "activities",
-      text: "¿Qué actividades extracurriculares realiza tu familia durante una semana típica?",
-      type: "textarea",
-      placeholder: "Ej: Fútbol los martes, natación los jueves...",
-    },
-    {
-      key: "weekend",
-      text: "¿Cómo describirías un fin de semana ideal para tu familia?",
-      type: "textarea",
-      placeholder: "Ej: Ir a la playa, comer afuera, caminar en un parque...",
-    },
-    {
-      key: "zone",
-      text: "¿En qué zona de Costa Rica preferirían vivir?",
-      type: "text",
-      placeholder: "Ej: Escazú, Santa Ana, Curridabat...",
-      geocode: true,
-    },
-    {
-      key: "income",
-      text: "¿Cuál es el rango de ingresos mensuales de tu familia?",
-      type: "chips",
-      options: ["Menos de $1,500", "$1,500 – $3,000", "$3,000 – $5,000", "$5,000 – $8,000", "Más de $8,000"],
-    },
-    {
-      key: "budget",
-      text: "¿Qué rango de inversión han considerado para la compra de una propiedad?",
-      type: "chips",
-      options: ["Menos de $150,000", "$150,000 – $250,000", "$250,000 – $400,000", "$400,000 – $600,000", "Más de $600,000"],
-    },
-  ];
+  // La conversación en sí corre contra una Supabase Edge Function que hace
+  // de proxy hacia la API de Claude — la API key de Anthropic vive solo ahí
+  // (server-side), nunca en este archivo. Ver supabase/functions/agente-chat.
+  const AGENT_ENDPOINT = "https://eapjmqjnnonbdggzxptz.supabase.co/functions/v1/agente-chat";
+
+  const GREETING =
+    "¡Hola! Soy el asesor de estilo de vida de FUTURA. Contame un poco sobre cómo vive tu familia — dónde trabajan, si tienen chicos y en qué colegio están, cómo son sus fines de semana — y te voy guiando desde ahí. ¿Por dónde querés empezar?";
+
+  // Campos que más ayudan a filtrar proyectos y ubicar cosas en el mapa —
+  // se usan solo para la barra de progreso, no limitan de qué se puede
+  // hablar.
+  const PRIORITY_FIELDS = ["lugar_trabajo", "destino_fin_de_semana", "transporte", "zona_preferida", "presupuesto_compra"];
 
   const overlay = document.getElementById("agent-overlay");
   const openBtn = document.getElementById("open-agent-btn");
   const closeBtn = document.getElementById("agent-close");
   const chatEl = document.getElementById("agent-chat");
-  const inputArea = document.getElementById("agent-input-area");
   const composer = document.getElementById("agent-composer");
+  const textInput = document.getElementById("agent-text-input");
+  const sendBtn = document.getElementById("agent-send-btn");
   const progressBar = document.getElementById("agent-progress-bar");
   const progressLabel = document.getElementById("agent-progress-label");
+  const ctaBox = document.getElementById("agent-cta");
+  const ctaBtn = document.getElementById("agent-cta-btn");
 
   if (!overlay || !openBtn) return;
 
-  let stepIndex = 0;
-  let answers = {};
-  let mapsLoadPromise = null;
   let started = false;
   let lastFocused = null;
+  let sending = false;
+  let mapsLoadPromise = null;
+
+  // Historial en formato "wire" de la API de Claude — se manda completo en
+  // cada turno (la API es stateless) y el servidor nos devuelve la versión
+  // actualizada (incluye los turnos de tool_use/tool_result que el
+  // servidor generó, que hay que reenviar tal cual).
+  let messages = [];
+
+  // Perfil estructurado acumulado, reconstruido en cada respuesta a partir
+  // de todos los guardar_criterio_usuario que hizo el servidor — no se
+  // arma incrementalmente en el cliente para no duplicar la fuente de
+  // verdad.
+  let criteria = [];
+  const geocodedPlaces = {}; // texto normalizado -> {label, lat, lng} | null (en curso)
+  let workPlaces = [];
+  let schoolPlaces = [];
+  let zoneGeo = null;
 
   function loadGoogleMaps() {
     if (window.google && window.google.maps) return Promise.resolve();
@@ -101,7 +69,7 @@
     return mapsLoadPromise;
   }
 
-  function geocodeZone(query) {
+  function geocode(query) {
     return loadGoogleMaps()
       .then(
         () =>
@@ -110,11 +78,7 @@
             geocoder.geocode({ address: `${query}, Costa Rica` }, (results, status) => {
               if (status === "OK" && results && results[0]) {
                 const r = results[0];
-                resolve({
-                  formattedAddress: r.formatted_address,
-                  lat: r.geometry.location.lat(),
-                  lng: r.geometry.location.lng(),
-                });
+                resolve({ label: r.formatted_address, lat: r.geometry.location.lat(), lng: r.geometry.location.lng() });
               } else {
                 resolve(null);
               }
@@ -124,26 +88,8 @@
       .catch(() => null);
   }
 
-  // El agente recolecta trabajo/colegios como prosa libre (puede describir
-  // varios lugares en una sola respuesta) — partimos por separadores obvios
-  // y geocodificamos cada fragmento por su cuenta, quedándonos solo con los
-  // que efectivamente se pudieron ubicar.
-  function splitLocationText(text) {
-    return text
-      .split(/,|;|\by\b|\n/i)
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .slice(0, 4);
-  }
-
-  function geocodeMultiple(text) {
-    const segments = splitLocationText(text);
-    if (!segments.length) return Promise.resolve([]);
-    return Promise.all(segments.map((seg) => geocodeZone(seg))).then((results) =>
-      results
-        .map((geo) => (geo ? { label: geo.formattedAddress, lat: geo.lat, lng: geo.lng } : null))
-        .filter(Boolean)
-    );
+  function normalizeKey(text) {
+    return text.trim().toLowerCase();
   }
 
   function scrollChatToBottom() {
@@ -168,156 +114,220 @@
     return typing;
   }
 
-  function updateProgress() {
-    const total = QUESTIONS.length;
-    const current = Math.min(stepIndex + 1, total);
-    progressBar.style.width = (Math.min(stepIndex, total) / total) * 100 + "%";
-    progressLabel.textContent = stepIndex < total ? "Pregunta " + current + " de " + total : "Perfil completo";
+  function setSending(value) {
+    sending = value;
+    textInput.disabled = value;
+    sendBtn.disabled = value;
   }
 
-  function renderInput(question) {
-    inputArea.innerHTML = "";
+  // --- Perfil estructurado: agrupar los criterios que devuelve el
+  // servidor y disparar la geocodificación de los lugares nuevos. ---
 
-    if (question.type === "chips") {
-      const wrap = document.createElement("div");
-      wrap.className = "agent-chips";
-      question.options.forEach((opt) => {
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = "agent-chip";
-        chip.textContent = opt;
-        chip.addEventListener("click", () => submitAnswer(opt));
-        wrap.appendChild(chip);
-      });
-      inputArea.appendChild(wrap);
-      return;
-    }
-
-    const field = question.type === "textarea" ? document.createElement("textarea") : document.createElement("input");
-    if (question.type !== "textarea") field.type = "text";
-    field.placeholder = question.placeholder || "Escribí tu respuesta...";
-    field.required = true;
-
-    const sendBtn = document.createElement("button");
-    sendBtn.type = "submit";
-    sendBtn.className = "agent-send";
-    sendBtn.setAttribute("aria-label", "Enviar respuesta");
-    sendBtn.textContent = "→";
-
-    inputArea.appendChild(field);
-    inputArea.appendChild(sendBtn);
-    field.focus();
-
-    composer.onsubmit = (e) => {
-      e.preventDefault();
-      const value = field.value.trim();
-      if (!value) return;
-      submitAnswer(value);
+  function groupCriteria(list) {
+    const grouped = {
+      lugar_trabajo: [],
+      colegio: [],
+      destino_fin_de_semana: [],
+      actividad_extracurricular: [],
     };
+    const latest = {};
+    list.forEach((c) => {
+      if (!c || !c.campo || !c.texto) return;
+      switch (c.campo) {
+        case "lugar_trabajo":
+        case "colegio":
+        case "destino_fin_de_semana":
+        case "actividad_extracurricular":
+          if (!grouped[c.campo].some((t) => normalizeKey(t) === normalizeKey(c.texto))) {
+            grouped[c.campo].push(c.texto);
+          }
+          break;
+        case "tamano_familia":
+          latest.tamano_familia = typeof c.cantidad_personas === "number" ? c.cantidad_personas : c.texto;
+          break;
+        case "presupuesto_compra":
+        case "ingresos_mensuales":
+          latest[c.campo] = typeof c.monto_usd === "number" ? c.monto_usd : c.texto;
+          break;
+        default:
+          // edades, transporte, zona_preferida: se queda con el valor más
+          // reciente (la persona puede corregirse durante la charla).
+          latest[c.campo] = c.texto;
+          break;
+      }
+    });
+    return Object.assign({}, grouped, latest);
   }
 
-  function askQuestion() {
-    updateProgress();
-    const question = QUESTIONS[stepIndex];
-    const typing = showTyping();
-    setTimeout(() => {
-      typing.remove();
-      addBubble(question.text, "bot");
-      renderInput(question);
-    }, 450 + Math.random() * 300);
-  }
-
-  function submitAnswer(value) {
-    const question = QUESTIONS[stepIndex];
-    answers[question.key] = value;
-    addBubble(value, "user");
-    inputArea.innerHTML = "";
-
-    if (question.geocode) {
-      const typing = showTyping();
-      geocodeZone(value).then((geo) => {
-        typing.remove();
-        if (geo) {
-          answers.zoneGeo = geo;
-          addBubble("📍 Ubiqué tu zona: " + geo.formattedAddress, "bot", true);
-        } else {
-          addBubble("Tomé nota de esa zona, aunque no pude ubicarla con precisión.", "bot", true);
-        }
-        advance();
+  function geocodePlacesFor(texts) {
+    const pending = texts.filter((t) => !(normalizeKey(t) in geocodedPlaces));
+    if (!pending.length) return Promise.resolve();
+    pending.forEach((t) => {
+      geocodedPlaces[normalizeKey(t)] = null; // marca "en curso" para no pedirlo dos veces
+    });
+    return Promise.all(pending.map((t) => geocode(t).then((geo) => ({ text: t, geo })))).then((results) => {
+      results.forEach(({ text, geo }) => {
+        geocodedPlaces[normalizeKey(text)] = geo ? { label: geo.label, lat: geo.lat, lng: geo.lng } : false;
       });
-    } else if (question.geocodeMultiTarget) {
-      const typing = showTyping();
-      geocodeMultiple(value).then((places) => {
-        typing.remove();
-        answers[question.geocodeMultiTarget] = places;
-        if (places.length) {
-          addBubble("📍 Ubiqué " + places.length + " lugar(es): " + places.map((p) => p.label).join(", "), "bot", true);
-        } else {
-          addBubble("Tomé nota, aunque no pude ubicar una dirección exacta ahí.", "bot", true);
-        }
-        advance();
-      });
-    } else {
-      advance();
-    }
+    });
   }
 
-  function advance() {
-    stepIndex += 1;
-    if (stepIndex >= QUESTIONS.length) {
-      finish();
-    } else {
-      askQuestion();
-    }
+  function placesFor(texts) {
+    return texts.map((t) => geocodedPlaces[normalizeKey(t)]).filter((g) => g && g !== false);
   }
 
-  function finish() {
-    updateProgress();
-    inputArea.innerHTML = "";
+  function applyCriteria(list) {
+    criteria = groupCriteria(list);
+
+    const toGeocode = [].concat(criteria.lugar_trabajo, criteria.colegio, criteria.zona_preferida ? [criteria.zona_preferida] : []);
+
+    return geocodePlacesFor(toGeocode).then(() => {
+      workPlaces = placesFor(criteria.lugar_trabajo);
+      schoolPlaces = placesFor(criteria.colegio);
+      zoneGeo = criteria.zona_preferida ? placesFor([criteria.zona_preferida])[0] || null : null;
+      updateProgress();
+      updateCta();
+    });
+  }
+
+  function updateProgress() {
+    const filled = PRIORITY_FIELDS.filter((f) => {
+      if (f === "lugar_trabajo") return criteria.lugar_trabajo && criteria.lugar_trabajo.length;
+      if (f === "destino_fin_de_semana") return criteria.destino_fin_de_semana && criteria.destino_fin_de_semana.length;
+      return criteria[f] != null && criteria[f] !== "";
+    }).length;
+    const total = PRIORITY_FIELDS.length;
+    progressBar.style.width = (filled / total) * 100 + "%";
+    progressLabel.textContent = filled >= total ? "Ya tengo un buen perfil de tu familia" : filled + " de " + total + " datos captados";
+  }
+
+  function updateCta() {
+    const hasAnything =
+      (criteria.lugar_trabajo && criteria.lugar_trabajo.length) ||
+      (criteria.destino_fin_de_semana && criteria.destino_fin_de_semana.length) ||
+      criteria.zona_preferida ||
+      criteria.presupuesto_compra != null;
+    ctaBox.hidden = !hasAnything;
+  }
+
+  // --- Conversación ---
+
+  function sendToAgent(userText) {
+    addBubble(userText, "user");
+    messages.push({ role: "user", content: userText });
+    setSending(true);
     const typing = showTyping();
-    setTimeout(() => {
-      typing.remove();
-      addBubble(
-        "¡Perfecto! Ya tengo tu perfil de vida completo. Estoy lista para mostrarte los proyectos que encajan con vos.",
-        "bot"
-      );
 
-      const finalWrap = document.createElement("div");
-      finalWrap.className = "agent-final";
+    fetch(AGENT_ENDPOINT, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ messages }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("bad_status");
+        return res.json();
+      })
+      .then((data) => {
+        typing.remove();
+        messages = Array.isArray(data.messages) ? data.messages : messages;
+        return applyCriteria(Array.isArray(data.criteria) ? data.criteria : []).then(() => {
+          addBubble(data.reply || "¿Podés contarme un poco más?", "bot");
+          setSending(false);
+          textInput.focus();
+        });
+      })
+      .catch(() => {
+        typing.remove();
+        addBubble("Uy, tuve un problema para responder. ¿Podés intentar de nuevo?", "bot", true);
+        setSending(false);
+        textInput.focus();
+      });
+  }
 
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "btn btn-primary";
-      btn.textContent = "Estás listo para conocer tu nuevo hogar";
-      btn.addEventListener("click", handleComplete);
+  composer.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (sending) return;
+    const value = textInput.value.trim();
+    if (!value) return;
+    textInput.value = "";
+    sendToAgent(value);
+  });
 
-      finalWrap.appendChild(btn);
-      inputArea.appendChild(finalWrap);
-      scrollChatToBottom();
-    }, 550);
+  // --- Cerrar la charla y pasar a resultados ---
+
+  function buildProfile() {
+    const profile = {};
+    if (criteria.tamano_familia != null) {
+      profile.familySize =
+        typeof criteria.tamano_familia === "number"
+          ? criteria.tamano_familia >= 5
+            ? "5+"
+            : String(criteria.tamano_familia)
+          : criteria.tamano_familia;
+    }
+    if (criteria.edades) profile.ages = criteria.edades;
+    if (criteria.lugar_trabajo && criteria.lugar_trabajo.length) profile.workLocations = criteria.lugar_trabajo.join(", ");
+    if (workPlaces.length) profile.workPlaces = workPlaces;
+    if (criteria.colegio && criteria.colegio.length) profile.schools = criteria.colegio.join(", ");
+    if (schoolPlaces.length) profile.schoolPlaces = schoolPlaces;
+    if (criteria.actividad_extracurricular && criteria.actividad_extracurricular.length) {
+      profile.activities = criteria.actividad_extracurricular.join(", ");
+    }
+    if (criteria.destino_fin_de_semana && criteria.destino_fin_de_semana.length) {
+      profile.weekend = criteria.destino_fin_de_semana.join(", ");
+    }
+    if (criteria.transporte) profile.transport = criteria.transporte;
+    if (criteria.zona_preferida) profile.zone = criteria.zona_preferida;
+    if (zoneGeo) profile.zoneGeo = zoneGeo;
+    if (criteria.ingresos_mensuales != null) {
+      profile.income =
+        typeof criteria.ingresos_mensuales === "number"
+          ? "$" + criteria.ingresos_mensuales.toLocaleString("en-US") + "/mes"
+          : criteria.ingresos_mensuales;
+    }
+    if (criteria.presupuesto_compra != null) {
+      if (typeof criteria.presupuesto_compra === "number") {
+        profile.budgetMax = criteria.presupuesto_compra;
+      } else {
+        profile.budget = criteria.presupuesto_compra;
+      }
+    }
+    return profile;
   }
 
   function handleComplete() {
     try {
-      localStorage.setItem("futuraUserProfile", JSON.stringify(answers));
+      localStorage.setItem("futuraUserProfile", JSON.stringify(buildProfile()));
     } catch (e) {
       /* localStorage puede no estar disponible (ej. modo privado); no es crítico */
     }
-    inputArea.innerHTML = "";
+    ctaBtn.disabled = true;
     addBubble("¡Listo! Preparando tu mapa de proyectos...", "bot", true);
     setTimeout(() => {
       // El ?from=agente es lo que le dice a resultados.html que puede mostrar
       // la información del perfil (núcleo familiar, ingresos, prefills) — si
       // se llega ahí por cualquier otro camino, esa info no debe aparecer.
       window.location.href = "resultados.html?from=agente";
-    }, 700);
+    }, 500);
   }
 
+  ctaBtn.addEventListener("click", handleComplete);
+
+  // --- Abrir / cerrar el modal ---
+
   function resetChat() {
-    stepIndex = 0;
-    answers = {};
+    messages = [];
+    criteria = [];
+    workPlaces = [];
+    schoolPlaces = [];
+    zoneGeo = null;
+    Object.keys(geocodedPlaces).forEach((k) => delete geocodedPlaces[k]);
     chatEl.innerHTML = "";
-    inputArea.innerHTML = "";
+    textInput.value = "";
+    ctaBox.hidden = true;
+    ctaBtn.disabled = false;
+    updateProgress();
+    addBubble(GREETING, "bot");
   }
 
   function openModal() {
@@ -327,9 +337,8 @@
     if (!started) {
       started = true;
       resetChat();
-      askQuestion();
     }
-    closeBtn.focus();
+    textInput.focus();
     document.addEventListener("keydown", onKeydown);
   }
 

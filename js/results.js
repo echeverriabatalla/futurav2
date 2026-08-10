@@ -159,11 +159,16 @@
       }
     }
 
-    if (p.budget) {
+    // Solo se prellena el techo: el presupuesto que contestó en el
+    // asistente es lo más que quiere gastar, no un mínimo — un proyecto
+    // más barato que su rango sigue siendo una opción válida.
+    if (typeof p.budgetMax === "number" && isFinite(p.budgetMax) && p.budgetMax > 0) {
+      // El agente conversacional guarda el presupuesto como un monto en
+      // dólares (no como uno de los rangos fijos de antes).
+      filters.priceMax = clamp(p.budgetMax, 0, PRICE_MAX);
+      seededFromProfile = true;
+    } else if (p.budget) {
       const bracket = PRICE_BRACKETS.find((b) => b.value === p.budget);
-      // Solo se prellena el techo: el presupuesto que contestó en el
-      // asistente es lo más que quiere gastar, no un mínimo — un proyecto
-      // más barato que su rango sigue siendo una opción válida.
       if (bracket && bracket.max != null) {
         filters.priceMax = clamp(bracket.max, 0, PRICE_MAX);
         seededFromProfile = true;

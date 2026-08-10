@@ -183,8 +183,8 @@
         <div class="agent-header-id">
           <span class="agent-avatar" aria-hidden="true">F</span>
           <div>
-            <p class="agent-title" id="agent-title">Asistente FUTURA</p>
-            <p class="agent-subtitle" id="agent-progress-label">Pregunta 1 de 9</p>
+            <p class="agent-title" id="agent-title">Asesor de estilo de vida FUTURA</p>
+            <p class="agent-subtitle" id="agent-progress-label">0 de 5 datos captados</p>
           </div>
         </div>
         <button type="button" class="agent-close" id="agent-close" aria-label="Cerrar">&times;</button>
@@ -196,8 +196,16 @@
 
       <div class="agent-chat" id="agent-chat"></div>
 
+      <div class="agent-cta" id="agent-cta" hidden>
+        <p id="agent-cta-text">Ya tengo algunas pistas sobre tu estilo de vida.</p>
+        <button type="button" class="btn btn-primary btn-sm" id="agent-cta-btn">Ver los proyectos que podrían encajar</button>
+      </div>
+
       <form class="agent-composer" id="agent-composer">
-        <div class="agent-input-area" id="agent-input-area"></div>
+        <div class="agent-input-area">
+          <input type="text" id="agent-text-input" placeholder="Escribí tu respuesta..." autocomplete="off" />
+          <button type="submit" class="agent-send" id="agent-send-btn" aria-label="Enviar respuesta">→</button>
+        </div>
       </form>
     </div>
   </div>
