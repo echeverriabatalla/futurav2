@@ -108,7 +108,7 @@
         window.FuturaBreadcrumb.withOrigin("../proyecto.html?id=" + item.project.id, "cuenta") +
         '">Ver proyecto →</a>' +
         '<div class="saved-card-actions">' +
-        '<label class="saved-card-check"><input type="checkbox" /> Comparar</label>' +
+        '<label class="saved-card-check"><input type="checkbox" /> Solicitar información</label>' +
         '<button type="button" class="saved-card-remove">Eliminar</button>' +
         "</div></div>";
 

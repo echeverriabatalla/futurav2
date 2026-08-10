@@ -98,7 +98,7 @@
         '<div class="typology-specs">' +
         specList(t).map((s) => "<span>" + s + "</span>").join("") +
         "</div>" +
-        '<button type="button" class="compare-btn" data-id="' + t.id + '">+ Comparar</button>' +
+        '<button type="button" class="compare-btn" data-id="' + t.id + '">+ Solicitar información</button>' +
         "</div>";
 
       const toggleBtns = card.querySelectorAll(".typology-toggle-btn");
@@ -128,7 +128,7 @@
       window.FuturaAuth.removeTypology(project.id, typology.id)
         .then(() => {
           btn.classList.remove("is-active");
-          btn.textContent = "+ Comparar";
+          btn.textContent = "+ Solicitar información";
         })
         .catch(() => {
           /* no se pudo quitar: se deja marcada como guardada */
@@ -164,12 +164,12 @@
       .then(({ error }) => {
         if (error) throw error;
         btn.classList.add("is-active");
-        btn.textContent = "✓ Guardado";
+        btn.textContent = "✓ En mi solicitud";
       })
       .catch(() => {
         btn.textContent = "No se pudo guardar";
         setTimeout(() => {
-          btn.textContent = "+ Comparar";
+          btn.textContent = "+ Solicitar información";
         }, 2000);
       })
       .finally(() => {
@@ -186,7 +186,7 @@
           document.querySelectorAll(".compare-btn").forEach((btn) => {
             if (savedIds.has(btn.dataset.id)) {
               btn.classList.add("is-active");
-              btn.textContent = "✓ Guardado";
+              btn.textContent = "✓ En mi solicitud";
             }
           });
         });
