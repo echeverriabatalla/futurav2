@@ -25,11 +25,23 @@ const path = require("path");
 const PORT = process.env.PORT || 8000;
 const ROOT = path.resolve(__dirname, "..");
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const MODEL = "claude-opus-5";
-const MAX_TOKENS = 1024;
+// Modelo económico: alcanza de sobra para esta charla guiada por tools, a
+// una fracción del costo de un modelo más grande. No soporta el parámetro
+// output_config.effort (por eso no aparece en callClaude) ni thinking
+// adaptativo — no hace falta para este caso de uso.
+const MODEL = "claude-haiku-4-5";
+// Tope alto del rango pedido (300–500): deja margen para una respuesta
+// completa sin dejar de forzar que sea corta — esto es un chat, no un
+// ensayo (el propio system prompt ya lo pide).
+const MAX_TOKENS = 500;
 const MAX_TOOL_ITERATIONS = 6;
 const MAX_MESSAGES = 60;
 const MAX_USER_MESSAGE_CHARS = 2000;
+// Tope de turnos por conversación — evita que una sola sesión (o un abuso
+// automatizado) genere de forma indefinida llamadas facturables a la API.
+// Cuenta solo mensajes de usuario en texto libre, no los turnos de
+// tool_result que el propio loop genera.
+const MAX_USER_TURNS_PER_SESSION = 20;
 
 const CRITERIA_TOOL_NAME = "guardar_criterio_usuario";
 
@@ -62,6 +74,17 @@ Herramienta:
 - Cada vez que la persona te dé un dato concreto y usable (un lugar de trabajo, un colegio, un destino de fin de semana, cómo se transportan, su presupuesto, sus ingresos, el tamaño de su familia, las edades), llamá a la herramienta ${CRITERIA_TOOL_NAME} con ese dato — incluso si lo menciona de pasada. Podés llamarla varias veces en el mismo turno si mencionó varias cosas a la vez.
 - Si la persona corrige un dato que ya guardaste, volvé a llamar la herramienta con el valor actualizado.
 - Nunca le muestres a la persona que estás usando una herramienta ni hables de "guardar datos" — para ella esto es solo una conversación.`;
+
+// El prompt cacheable es un bloque de texto con cache_control en vez de un
+// string plano — es la única forma de marcar un breakpoint de caching. El
+// orden de render de la API es tools → system → messages, así que este
+// breakpoint (al final de system) cachea tools + system juntos; no hace
+// falta un breakpoint separado en CRITERIA_TOOL. Dicho esto: el mínimo
+// cacheable en Haiku 4.5 es 4096 tokens, y este prompt + la tool quedan muy
+// por debajo — hoy este breakpoint no genera hits (cache_read_input_tokens
+// siempre en 0), pero no hace daño dejarlo listo para cuando el prompt
+// crezca o se cambie de modelo.
+const SYSTEM_BLOCKS = [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }];
 
 const CRITERIA_TOOL = {
   name: CRITERIA_TOOL_NAME,
@@ -149,12 +172,15 @@ function callClaude(messages) {
     body: JSON.stringify({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      system: SYSTEM_PROMPT,
+      system: SYSTEM_BLOCKS,
       tools: [CRITERIA_TOOL],
-      output_config: { effort: "low" },
       messages,
     }),
   });
+}
+
+function countUserTurns(messages) {
+  return messages.filter((m) => m.role === "user" && typeof m.content === "string").length;
 }
 
 function readBody(req) {
@@ -191,6 +217,22 @@ async function handleAgentChat(req, res) {
 
   let messages = sanitizeIncomingMessages(body && body.messages);
   if (!messages) return sendJson(res, 400, { error: "invalid_messages" });
+
+  // Corta acá, sin llamar a la API: esto es lo que realmente evita el
+  // abuso (el chequeo del lado del cliente en agent.js es solo para
+  // mostrar el aviso — el gasto real se frena acá). Responde 200 con un
+  // mensaje conversacional en vez de un error, para que se vea como una
+  // respuesta normal del asistente y no dispare el flujo de reintento/
+  // modo local del cliente.
+  if (countUserTurns(messages) > MAX_USER_TURNS_PER_SESSION) {
+    return sendJson(res, 200, {
+      reply:
+        "Llegamos al límite de mensajes para esta conversación. Con lo que ya charlamos tengo suficiente para mostrarte proyectos — si querés seguir contándome, abrí el chat de nuevo más tarde.",
+      messages,
+      criteria: extractCriteria(messages),
+      limitReached: true,
+    });
+  }
 
   for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
     let response;

@@ -23,8 +23,22 @@
   // el mismo que corre en supabase/functions/agente-chat — acá simplemente
   // se ejecutan en el navegador en vez de en un servidor.
   const DIRECT_ANTHROPIC_ENDPOINT = "https://api.anthropic.com/v1/messages";
-  const CLAUDE_MODEL = "claude-opus-5";
+  // Modelo económico: alcanza de sobra para esta charla guiada por tools, a
+  // una fracción del costo de un modelo más grande. No soporta el
+  // parámetro output_config.effort (por eso no aparece más abajo) ni
+  // thinking adaptativo — no hace falta para este caso de uso.
+  const CLAUDE_MODEL = "claude-haiku-4-5";
+  // Tope alto del rango pedido (300–500): deja margen para una respuesta
+  // completa sin dejar de forzar que sea corta — esto es un chat, no un
+  // ensayo (el propio system prompt ya lo pide).
+  const CLAUDE_MAX_TOKENS = 500;
   const MAX_DIRECT_TOOL_ITERATIONS = 6;
+  // Mismo tope que el backend (ver supabase/functions/agente-chat) — acá
+  // no protege nuestra cuota (la persona usa su propia key), pero mantiene
+  // el comportamiento consistente y evita una conversación sin límite.
+  const MAX_USER_TURNS_PER_SESSION = 20;
+  const SESSION_LIMIT_MESSAGE =
+    "Llegamos al límite de mensajes para esta conversación. Con lo que ya charlamos tengo suficiente para mostrarte proyectos — si querés seguir contándome, abrí el chat de nuevo más tarde.";
   const CRITERIA_TOOL_NAME = "guardar_criterio_usuario";
   const CRITERIA_FIELDS = [
     "tamano_familia",
@@ -54,6 +68,13 @@
     " con ese dato — incluso si lo menciona de pasada. Podés llamarla varias veces en el mismo turno si mencionó varias cosas a la vez.\n" +
     "- Si la persona corrige un dato que ya guardaste, volvé a llamar la herramienta con el valor actualizado.\n" +
     '- Nunca le muestres a la persona que estás usando una herramienta ni hables de "guardar datos" — para ella esto es solo una conversación.';
+
+  // El prompt cacheable es un bloque de texto con cache_control en vez de
+  // un string plano — es la única forma de marcar un breakpoint de
+  // caching. El mínimo cacheable en Haiku 4.5 es 4096 tokens y este prompt
+  // + la tool quedan muy por debajo, así que hoy no genera hits — queda
+  // listo para cuando el prompt crezca o se cambie de modelo.
+  const AGENT_SYSTEM_BLOCKS = [{ type: "text", text: AGENT_SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }];
 
   const CRITERIA_TOOL = {
     name: CRITERIA_TOOL_NAME,
@@ -107,6 +128,7 @@
   let started = false;
   let lastFocused = null;
   let sending = false;
+  let sessionLimitReached = false;
   let mapsLoadPromise = null;
 
   // Key de Anthropic pegada por la persona para el modo de prueba directo
@@ -192,8 +214,18 @@
 
   function setSending(value) {
     sending = value;
-    textInput.disabled = value;
-    sendBtn.disabled = value;
+    textInput.disabled = value || sessionLimitReached;
+    sendBtn.disabled = value || sessionLimitReached;
+  }
+
+  // Se llama cuando el backend (o el modo directo) avisa que se llegó al
+  // límite de mensajes de la sesión — deja el composer inhabilitado para
+  // siempre en esta conversación, en vez de solo mostrar el aviso una vez.
+  function lockComposer() {
+    sessionLimitReached = true;
+    textInput.disabled = true;
+    sendBtn.disabled = true;
+    textInput.placeholder = "Alcanzaste el límite de mensajes de esta conversación";
   }
 
   // --- Modo de prueba: llamar a Claude directo desde el navegador con la
@@ -228,7 +260,22 @@
     return out;
   }
 
+  function countUserTurns(msgs) {
+    return msgs.filter((m) => m.role === "user" && typeof m.content === "string").length;
+  }
+
   function runAgentTurnDirect(apiKey, initialMessages) {
+    // Corta acá, sin llamar a la API: mismo comportamiento que el backend
+    // para esta conversación, aunque acá la key sea de la propia persona.
+    if (countUserTurns(initialMessages) > MAX_USER_TURNS_PER_SESSION) {
+      return Promise.resolve({
+        reply: SESSION_LIMIT_MESSAGE,
+        messages: initialMessages,
+        criteria: extractCriteriaFromMessages(initialMessages),
+        limitReached: true,
+      });
+    }
+
     let msgs = initialMessages.slice();
     let iterations = 0;
 
@@ -251,10 +298,9 @@
         },
         body: JSON.stringify({
           model: CLAUDE_MODEL,
-          max_tokens: 1024,
-          system: AGENT_SYSTEM_PROMPT,
+          max_tokens: CLAUDE_MAX_TOKENS,
+          system: AGENT_SYSTEM_BLOCKS,
           tools: [CRITERIA_TOOL],
-          output_config: { effort: "low" },
           messages: msgs,
         }),
       })
@@ -445,8 +491,12 @@
         messages = Array.isArray(data.messages) ? data.messages : messages;
         return applyCriteria(Array.isArray(data.criteria) ? data.criteria : []).then(() => {
           addBubble(data.reply || "¿Podés contarme un poco más?", "bot");
-          setSending(false);
-          textInput.focus();
+          if (data.limitReached) {
+            lockComposer();
+          } else {
+            setSending(false);
+            textInput.focus();
+          }
         });
       })
       .catch(() => {
@@ -471,7 +521,7 @@
 
   composer.addEventListener("submit", (e) => {
     e.preventDefault();
-    if (sending) return;
+    if (sending || sessionLimitReached) return;
     const value = textInput.value.trim();
     if (!value) return;
     textInput.value = "";
@@ -546,9 +596,13 @@
     workPlaces = [];
     schoolPlaces = [];
     zoneGeo = null;
+    sessionLimitReached = false;
     Object.keys(geocodedPlaces).forEach((k) => delete geocodedPlaces[k]);
     chatEl.innerHTML = "";
     textInput.value = "";
+    textInput.disabled = false;
+    textInput.placeholder = "Escribí tu respuesta...";
+    sendBtn.disabled = false;
     ctaBox.hidden = true;
     ctaBtn.disabled = false;
     updateProgress();
