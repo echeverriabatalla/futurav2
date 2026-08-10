@@ -10,6 +10,7 @@ window.FUTURA_PROJECTS = [
     bedrooms: "2–3 hab.",
     delivery: "2027",
     propertyType: "apartamento",
+    destacado: true,
     amenities: ["Piscina", "Gimnasio", "Coworking", "Seguridad 24/7"],
     developer: { name: "Grupo Terra Nova", slug: "grupo-terra-nova" },
     typologies: [
@@ -26,6 +27,7 @@ window.FUTURA_PROJECTS = [
     bedrooms: "3–4 hab.",
     delivery: "2026",
     propertyType: "apartamento",
+    destacado: true,
     amenities: ["Áreas verdes", "Piscina", "Salón de eventos", "Cancha multiuso"],
     developer: { name: "Inversiones Cerro Alto", slug: "inversiones-cerro-alto" },
     typologies: [
@@ -42,6 +44,7 @@ window.FUTURA_PROJECTS = [
     bedrooms: "2 hab.",
     delivery: "2027",
     propertyType: "apartamento",
+    destacado: false,
     amenities: ["Rooftop", "Gimnasio", "Pet-friendly", "Coworking"],
     developer: { name: "Constructora Volcán", slug: "constructora-volcan" },
     typologies: [
@@ -58,6 +61,7 @@ window.FUTURA_PROJECTS = [
     bedrooms: "3 hab.",
     delivery: "2026",
     propertyType: "apartamento",
+    destacado: false,
     amenities: ["Piscina", "Parque infantil", "Seguridad 24/7"],
     developer: { name: "Desarrollos Montebello", slug: "desarrollos-montebello" },
     typologies: [
@@ -74,6 +78,7 @@ window.FUTURA_PROJECTS = [
     bedrooms: "4 hab.",
     delivery: "2028",
     propertyType: "apartamento",
+    destacado: true,
     amenities: ["Club house", "Piscina infinita", "Gimnasio", "Senderos naturales"],
     developer: { name: "Altura Desarrollos", slug: "altura-desarrollos" },
     typologies: [
@@ -90,6 +95,7 @@ window.FUTURA_PROJECTS = [
     bedrooms: "3–4 hab.",
     delivery: "2027",
     propertyType: "casa",
+    destacado: false,
     amenities: ["Jardín privado", "Parqueo techado", "Seguridad 24/7", "Zona de juegos"],
     developer: { name: "Roble Real Homes", slug: "roble-real-homes" },
     typologies: [
@@ -106,6 +112,7 @@ window.FUTURA_PROJECTS = [
     bedrooms: "Lote",
     delivery: "2026",
     propertyType: "lote",
+    destacado: false,
     amenities: ["Portón de acceso", "Electricidad disponible", "Agua potable", "Calles asfaltadas"],
     developer: { name: "Desarrollos Vista Verde", slug: "desarrollos-vista-verde" },
     typologies: [

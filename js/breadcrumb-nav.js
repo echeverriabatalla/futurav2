@@ -19,6 +19,9 @@ window.FuturaBreadcrumb = (() => {
     if (from === "resultados") {
       return { href: basePrefix + "resultados.html", label: "Resultados" };
     }
+    if (from === "inicio") {
+      return { href: basePrefix + "index.html#destacados", label: "Destacados" };
+    }
     if (from === "desarrolladoras") {
       return { href: basePrefix + "desarrolladoras.html", label: "Desarrolladoras" };
     }

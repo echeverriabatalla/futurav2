@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Panel interno — Destacados — FUTURA</title>
+  <meta name="description" content="Página interna del equipo FUTURA para marcar qué proyectos aparecen en el carrusel de destacados." />
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='24' fill='%230b1220'/%3E%3Cpolyline points='18,92 60,28 102,92' fill='none' stroke='%23ffffff' stroke-width='14' stroke-linecap='round' stroke-linejoin='round'/%3E%3Crect x='51' y='58' width='8' height='8' fill='%23c9a15a'/%3E%3Crect x='61' y='58' width='8' height='8' fill='%23c9a15a'/%3E%3Crect x='51' y='68' width='8' height='8' fill='%23c9a15a'/%3E%3Crect x='61' y='68' width='8' height='8' fill='%23c9a15a'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <header class="dev-header" id="admin-header">
+    <div class="wrap dev-header-inner">
+      <a href="index.html#inicio" class="logo logo--nav logo--onDark" aria-label="FUTURA — inicio">
+        <svg class="logo-mark" viewBox="0 0 100 100" aria-hidden="true">
+          <rect x="0" y="0" width="44" height="44" fill="currentColor" />
+          <rect x="56" y="0" width="44" height="44" fill="currentColor" />
+          <rect x="0" y="56" width="44" height="44" fill="currentColor" />
+          <rect x="56" y="56" width="44" height="44" fill="currentColor" />
+        </svg>
+        FUTURA
+      </a>
+      <div class="dev-header-actions">
+        <span class="account-link">Panel interno</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="results-hero">
+      <div class="wrap">
+        <span class="eyebrow">Equipo FUTURA</span>
+        <h1>Proyectos destacados</h1>
+        <p class="results-hero-lead">
+          Marcá qué proyectos aparecen en el carrusel de "Proyectos destacados" de la página principal. Los cambios
+          se guardan al instante.
+        </p>
+      </div>
+    </section>
+
+    <section class="results-list-section">
+      <div class="wrap">
+        <div class="admin-list" id="admin-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="contacto">
+    <div class="wrap">
+      <div class="footer-bottom">
+        <span>© 2026 FUTURA. Todos los derechos reservados.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/projects-data.js"></script>
+  <script src="js/featured-mock.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

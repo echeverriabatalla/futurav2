@@ -386,6 +386,237 @@ section {
   color: var(--text-muted-ondark);
 }
 
+/* ---------- Proyectos destacados ---------- */
+
+.featured {
+  background: var(--white);
+  padding: 70px 0 90px;
+}
+
+.featured-head {
+  max-width: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.featured-head h2 {
+  margin-bottom: 0;
+}
+
+.featured-arrows {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.featured-arrow {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1.5px solid var(--bg-light-alt);
+  background: var(--white);
+  color: var(--navy-900);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.featured-arrow:hover {
+  border-color: var(--blue-500);
+  color: var(--blue-600);
+  transform: translateY(-1px);
+}
+
+.featured-track {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding-bottom: 10px;
+  scrollbar-width: thin;
+}
+
+.featured-track:focus-visible {
+  outline: 2px solid var(--blue-500);
+  outline-offset: 4px;
+}
+
+.featured-card {
+  scroll-snap-align: start;
+  flex: 0 0 280px;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--white);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 14px 34px -24px rgba(11, 18, 32, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.featured-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -20px rgba(11, 18, 32, 0.4);
+}
+
+.featured-card-visual {
+  position: relative;
+  height: 160px;
+}
+
+.featured-card-visual--0 { background: linear-gradient(135deg, var(--navy-900), var(--blue-600)); }
+.featured-card-visual--1 { background: linear-gradient(135deg, var(--navy-700), var(--gold-500)); }
+.featured-card-visual--2 { background: linear-gradient(135deg, var(--navy-900), #2fa88f); }
+.featured-card-visual--3 { background: linear-gradient(135deg, var(--navy-900), #8f3bd6); }
+
+.featured-card-skyline {
+  width: 100%;
+  height: 100%;
+}
+
+.featured-card-skyline rect {
+  fill: rgba(255, 255, 255, 0.16);
+}
+
+.featured-card-window {
+  fill: var(--gold-500) !important;
+}
+
+.featured-card-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(11, 18, 32, 0.55);
+  color: var(--white);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.featured-card-body {
+  padding: 16px 18px 20px;
+}
+
+.featured-card-body h3 {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  margin: 0 0 4px;
+  color: var(--text-dark);
+}
+
+.featured-card-developer {
+  font-size: 0.82rem;
+  color: var(--text-onLight-soft);
+  margin: 0 0 8px;
+}
+
+.featured-card-price {
+  font-weight: 700;
+  color: var(--blue-600);
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .featured-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ---------- Switch (toggle) ---------- */
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.switch input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.switch-track {
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--bg-light-alt);
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  transition: background 0.2s ease;
+}
+
+.switch-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 1px 3px rgba(11, 18, 32, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.switch input:checked + .switch-track {
+  background: var(--blue-600);
+}
+
+.switch input:checked + .switch-track .switch-thumb {
+  transform: translateX(20px);
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--blue-500);
+  outline-offset: 2px;
+}
+
+/* ---------- Admin: destacados ---------- */
+
+.admin-list {
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: 0 14px 34px -24px rgba(11, 18, 32, 0.35);
+  overflow: hidden;
+}
+
+.admin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--bg-light-alt);
+}
+
+.admin-row:last-child {
+  border-bottom: none;
+}
+
+.admin-row-info h3 {
+  font-family: var(--font-serif);
+  font-size: 1.02rem;
+  margin: 0 0 4px;
+  color: var(--text-dark);
+}
+
+.admin-row-info p {
+  font-size: 0.86rem;
+  color: var(--text-onLight-soft);
+  margin: 0;
+}
+
 /* ---------- Viaje del usuario ---------- */
 
 .journey {
