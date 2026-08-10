@@ -728,6 +728,64 @@ section {
   to { opacity: 1; transform: translateY(0); }
 }
 
+.agent-key-gate {
+  align-self: stretch;
+  width: 100%;
+  background: var(--navy-900);
+  color: var(--white);
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: agent-bubble-in 0.25s ease;
+}
+
+.agent-key-gate-title {
+  font-weight: 700;
+  font-size: 0.98rem;
+  margin: 0;
+}
+
+.agent-key-gate-desc {
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 0;
+}
+
+.agent-key-gate-form {
+  display: flex;
+  gap: 8px;
+}
+
+.agent-key-gate-form input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 9px 12px;
+  color: var(--white);
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+}
+
+.agent-key-gate-form input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.agent-key-gate-form input:focus {
+  outline: 2px solid var(--gold-500);
+  outline-offset: 1px;
+}
+
+.agent-key-gate-warning {
+  font-size: 0.76rem;
+  color: var(--gold-500);
+  margin: 0;
+}
+
 .agent-bubble.bot {
   align-self: flex-start;
   background: var(--white);

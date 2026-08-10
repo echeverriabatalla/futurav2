@@ -14,6 +14,74 @@
     ? "/api/agente-chat"
     : "https://eapjmqjnnonbdggzxptz.supabase.co/functions/v1/agente-chat";
 
+  // Si ese backend todavía no está desplegado, ofrecemos un modo de prueba
+  // que llama a la API de Claude directamente desde el navegador con una key
+  // que la persona pega ella misma — solo para probar en la propia
+  // computadora. La key vive únicamente en esta variable (nunca se guarda
+  // en localStorage/sessionStorage ni se manda a ningún servidor nuestro) y
+  // se pierde apenas se recarga la página. El prompt, la tool y el loop son
+  // el mismo que corre en supabase/functions/agente-chat — acá simplemente
+  // se ejecutan en el navegador en vez de en un servidor.
+  const DIRECT_ANTHROPIC_ENDPOINT = "https://api.anthropic.com/v1/messages";
+  const CLAUDE_MODEL = "claude-opus-5";
+  const MAX_DIRECT_TOOL_ITERATIONS = 6;
+  const CRITERIA_TOOL_NAME = "guardar_criterio_usuario";
+  const CRITERIA_FIELDS = [
+    "tamano_familia",
+    "edades",
+    "lugar_trabajo",
+    "colegio",
+    "actividad_extracurricular",
+    "destino_fin_de_semana",
+    "transporte",
+    "zona_preferida",
+    "ingresos_mensuales",
+    "presupuesto_compra",
+  ];
+  const AGENT_SYSTEM_PROMPT =
+    "Sos el asesor de estilo de vida de FUTURA, una plataforma que ayuda a familias en Costa Rica a encontrar el proyecto residencial que mejor encaja con su vida real — no solo con su presupuesto.\n\n" +
+    "Tu objetivo es tener una conversación natural y cálida, como la que tendrías con un asesor de confianza, para entender cómo vive la familia: dónde trabajan, dónde estudian sus hijos si los hay, cómo son sus fines de semana, cómo se transportan por la ciudad, y qué presupuesto manejan.\n\n" +
+    "Cómo conversar:\n" +
+    "- Hacé una pregunta genuina a la vez y reaccioná brevemente a lo que te cuentan antes de seguir — no dispares una lista de preguntas ni suene a formulario.\n" +
+    "- Dejá que la persona cuente las cosas en el orden que le salga natural. Si ya mencionó algo de pasada, no se lo vuelvas a preguntar.\n" +
+    "- Sé cálido, concreto y directo. Respuestas cortas — esto es un chat, no un ensayo.\n" +
+    "- Priorizá entender: dónde trabaja la familia, dónde estudian los chicos (si aplica), cómo son sus fines de semana, cómo se transportan, y el presupuesto de compra. El tamaño de la familia, las edades y los ingresos ayudan si surgen naturalmente, pero no son obligatorios.\n" +
+    "- En cuanto tengas una idea razonable del estilo de vida de la familia — aunque no sea perfecta ni completa — decíselo y ofrecé mostrarle los proyectos que podrían encajar.\n" +
+    "- Si la persona ya te dijo que quiere ver los proyectos, no insistas con más preguntas.\n\n" +
+    "Herramienta:\n" +
+    "- Cada vez que la persona te dé un dato concreto y usable (un lugar de trabajo, un colegio, un destino de fin de semana, cómo se transportan, su presupuesto, sus ingresos, el tamaño de su familia, las edades), llamá a la herramienta " +
+    CRITERIA_TOOL_NAME +
+    " con ese dato — incluso si lo menciona de pasada. Podés llamarla varias veces en el mismo turno si mencionó varias cosas a la vez.\n" +
+    "- Si la persona corrige un dato que ya guardaste, volvé a llamar la herramienta con el valor actualizado.\n" +
+    '- Nunca le muestres a la persona que estás usando una herramienta ni hables de "guardar datos" — para ella esto es solo una conversación.';
+
+  const CRITERIA_TOOL = {
+    name: CRITERIA_TOOL_NAME,
+    description:
+      "Guarda un dato concreto sobre el estilo de vida o presupuesto de la familia, mencionado en la conversación, para usarlo después en el mapa y los filtros de búsqueda de FUTURA. Llamar cada vez que se identifique un dato nuevo o corregido — no esperar a tener el perfil completo.",
+    input_schema: {
+      type: "object",
+      properties: {
+        campo: { type: "string", enum: CRITERIA_FIELDS, description: "Qué tipo de dato es." },
+        texto: {
+          type: "string",
+          description:
+            "El dato tal como lo mencionó la persona, en sus propias palabras (ej. 'Escazú', 'Country Day School', 'la playa los fines de semana', 'carro propio').",
+        },
+        monto_usd: {
+          type: "number",
+          description:
+            "Solo para 'ingresos_mensuales' o 'presupuesto_compra': el monto en dólares. Si mencionó un rango, usar el valor más alto del rango.",
+        },
+        cantidad_personas: {
+          type: "integer",
+          description: "Solo para 'tamano_familia': el número de personas en el núcleo familiar.",
+        },
+      },
+      required: ["campo", "texto"],
+    },
+  };
+
   const GREETING =
     "¡Hola! Soy el asesor de estilo de vida de FUTURA. Contame un poco sobre cómo vive tu familia — dónde trabajan, si tienen chicos y en qué colegio están, cómo son sus fines de semana — y te voy guiando desde ahí. ¿Por dónde querés empezar?";
 
@@ -40,6 +108,10 @@
   let lastFocused = null;
   let sending = false;
   let mapsLoadPromise = null;
+
+  // Key de Anthropic pegada por la persona para el modo de prueba directo
+  // en el navegador — null hasta que haga falta (ver comentario arriba).
+  let directApiKey = null;
 
   // Historial en formato "wire" de la API de Claude — se manda completo en
   // cada turno (la API es stateless) y el servidor nos devuelve la versión
@@ -122,6 +194,138 @@
     sending = value;
     textInput.disabled = value;
     sendBtn.disabled = value;
+  }
+
+  // --- Modo de prueba: llamar a Claude directo desde el navegador con la
+  // key que pegó la persona, replicando el mismo prompt/tool/loop que corre
+  // en supabase/functions/agente-chat. Solo se usa si el backend normal
+  // (AGENT_ENDPOINT) no responde. ---
+
+  function normalizeCriterionInput(input) {
+    if (!input || typeof input.campo !== "string" || CRITERIA_FIELDS.indexOf(input.campo) === -1) return null;
+    if (typeof input.texto !== "string" || !input.texto.trim()) return null;
+    const criterion = { campo: input.campo, texto: input.texto.trim().slice(0, 300) };
+    if (typeof input.monto_usd === "number" && isFinite(input.monto_usd) && input.monto_usd > 0) {
+      criterion.monto_usd = input.monto_usd;
+    }
+    if (typeof input.cantidad_personas === "number" && isFinite(input.cantidad_personas) && input.cantidad_personas > 0) {
+      criterion.cantidad_personas = Math.round(input.cantidad_personas);
+    }
+    return criterion;
+  }
+
+  function extractCriteriaFromMessages(msgs) {
+    const out = [];
+    msgs.forEach((m) => {
+      if (m.role !== "assistant" || !Array.isArray(m.content)) return;
+      m.content.forEach((block) => {
+        if (block && block.type === "tool_use" && block.name === CRITERIA_TOOL_NAME) {
+          const criterion = normalizeCriterionInput(block.input);
+          if (criterion) out.push(criterion);
+        }
+      });
+    });
+    return out;
+  }
+
+  function runAgentTurnDirect(apiKey, initialMessages) {
+    let msgs = initialMessages.slice();
+    let iterations = 0;
+
+    function step() {
+      iterations += 1;
+      if (iterations > MAX_DIRECT_TOOL_ITERATIONS) {
+        return Promise.reject(new Error("too_many_tool_iterations"));
+      }
+      return fetch(DIRECT_ANTHROPIC_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          // Anthropic bloquea llamadas directas desde el navegador salvo que
+          // se pida explícitamente con este header — es una barrera a
+          // propósito, porque exponer la key en el navegador es inseguro
+          // fuera de un uso de prueba como este.
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
+        body: JSON.stringify({
+          model: CLAUDE_MODEL,
+          max_tokens: 1024,
+          system: AGENT_SYSTEM_PROMPT,
+          tools: [CRITERIA_TOOL],
+          output_config: { effort: "low" },
+          messages: msgs,
+        }),
+      })
+        .then((res) => {
+          if (res.ok) return res.json();
+          return res
+            .json()
+            .catch(() => null)
+            .then((err) => {
+              const message = err && err.error && err.error.message;
+              throw new Error(message || "anthropic_error_" + res.status);
+            });
+        })
+        .then((data) => {
+          msgs = msgs.concat([{ role: "assistant", content: data.content }]);
+
+          if (data.stop_reason !== "tool_use") {
+            const reply = (data.content || [])
+              .filter((b) => b.type === "text")
+              .map((b) => b.text)
+              .join("\n\n")
+              .trim();
+            return { reply: reply, messages: msgs, criteria: extractCriteriaFromMessages(msgs) };
+          }
+
+          const toolResults = [];
+          (data.content || []).forEach((block) => {
+            if (block.type !== "tool_use") return;
+            if (block.name === CRITERIA_TOOL_NAME) {
+              toolResults.push({ type: "tool_result", tool_use_id: block.id, content: "Guardado." });
+            } else {
+              toolResults.push({
+                type: "tool_result",
+                tool_use_id: block.id,
+                content: "Herramienta desconocida.",
+                is_error: true,
+              });
+            }
+          });
+          msgs = msgs.concat([{ role: "user", content: toolResults }]);
+          return step();
+        });
+    }
+
+    return step();
+  }
+
+  function showKeyGate(onSubmit) {
+    const card = document.createElement("div");
+    card.className = "agent-key-gate";
+    card.innerHTML =
+      '<p class="agent-key-gate-title">Probar el asesor (modo local)</p>' +
+      '<p class="agent-key-gate-desc">El servidor todavía no está configurado. Pegá tu API key de Anthropic para probar el chat en este navegador — se usa solo en esta pestaña, no se guarda ni se manda a ningún servidor nuestro.</p>' +
+      '<form class="agent-key-gate-form">' +
+      '<input type="password" placeholder="sk-ant-..." autocomplete="off" />' +
+      '<button type="submit" class="btn btn-primary btn-sm">Guardar y empezar</button>' +
+      "</form>" +
+      '<p class="agent-key-gate-warning">Solo para probar en tu computadora — nunca compartas ni publiques esta página con la key cargada.</p>';
+    chatEl.appendChild(card);
+    scrollChatToBottom();
+
+    const form = card.querySelector("form");
+    const input = card.querySelector("input");
+    input.focus();
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const key = input.value.trim();
+      if (!key) return;
+      card.remove();
+      onSubmit(key);
+    });
   }
 
   // --- Perfil estructurado: agrupar los criterios que devuelve el
@@ -216,21 +420,26 @@
 
   // --- Conversación ---
 
-  function sendToAgent(userText) {
-    addBubble(userText, "user");
-    messages.push({ role: "user", content: userText });
+  function sendToAgent(userText, isRetry) {
+    if (!isRetry) {
+      addBubble(userText, "user");
+      messages.push({ role: "user", content: userText });
+    }
     setSending(true);
     const typing = showTyping();
 
-    fetch(AGENT_ENDPOINT, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ messages }),
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("bad_status");
-        return res.json();
-      })
+    const requestPromise = directApiKey
+      ? runAgentTurnDirect(directApiKey, messages)
+      : fetch(AGENT_ENDPOINT, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ messages }),
+        }).then((res) => {
+          if (!res.ok) throw new Error("bad_status");
+          return res.json();
+        });
+
+    requestPromise
       .then((data) => {
         typing.remove();
         messages = Array.isArray(data.messages) ? data.messages : messages;
@@ -242,9 +451,21 @@
       })
       .catch(() => {
         typing.remove();
-        addBubble("Uy, tuve un problema para responder. ¿Podés intentar de nuevo?", "bot", true);
-        setSending(false);
-        textInput.focus();
+        if (!directApiKey) {
+          // El backend (Supabase / servidor local) todavía no está
+          // disponible — ofrecemos seguir la charla probando directo desde
+          // el navegador con una key que la persona pegue ella misma.
+          showKeyGate((key) => {
+            directApiKey = key;
+            setSending(false);
+            sendToAgent(userText, true);
+          });
+          setSending(false);
+        } else {
+          addBubble("No pude conectarme con Claude. Revisá que la API key sea válida y tenga saldo, y probá de nuevo.", "bot", true);
+          setSending(false);
+          textInput.focus();
+        }
       });
   }
 
