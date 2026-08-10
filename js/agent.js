@@ -5,10 +5,14 @@
   // menciona en la charla.
   const GOOGLE_MAPS_API_KEY = "AIzaSyCp6hfATMHB75MEv_werB1IV5yNUjTu1vM";
 
-  // La conversación en sí corre contra una Supabase Edge Function que hace
-  // de proxy hacia la API de Claude — la API key de Anthropic vive solo ahí
-  // (server-side), nunca en este archivo. Ver supabase/functions/agente-chat.
-  const AGENT_ENDPOINT = "https://eapjmqjnnonbdggzxptz.supabase.co/functions/v1/agente-chat";
+  // La conversación en sí corre contra un proxy server-side que hace de
+  // intermediario hacia la API de Claude — la API key de Anthropic vive
+  // solo ahí, nunca en este archivo. En localhost usa el servidor de
+  // desarrollo (server/dev-server.js); en cualquier otro dominio usa la
+  // Supabase Edge Function (ver supabase/functions/agente-chat).
+  const AGENT_ENDPOINT = ["localhost", "127.0.0.1"].includes(window.location.hostname)
+    ? "/api/agente-chat"
+    : "https://eapjmqjnnonbdggzxptz.supabase.co/functions/v1/agente-chat";
 
   const GREETING =
     "¡Hola! Soy el asesor de estilo de vida de FUTURA. Contame un poco sobre cómo vive tu familia — dónde trabajan, si tienen chicos y en qué colegio están, cómo son sus fines de semana — y te voy guiando desde ahí. ¿Por dónde querés empezar?";
