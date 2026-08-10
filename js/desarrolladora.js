@@ -1,5 +1,5 @@
 (() => {
-  const { loadGoogleMaps, MAP_STYLE } = window.FuturaMapsUtils;
+  const { loadGoogleMaps, MAP_STYLE, addMapTypeToggle } = window.FuturaMapsUtils;
   const PROJECTS = window.FUTURA_PROJECTS;
   const DEVELOPERS = window.FUTURA_DEVELOPERS;
 
@@ -75,6 +75,7 @@
           mapTypeControl: false,
           streetViewControl: false,
         });
+        addMapTypeToggle(map);
         loadingEl.remove();
 
         const bounds = new google.maps.LatLngBounds();

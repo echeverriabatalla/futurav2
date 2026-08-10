@@ -1,5 +1,5 @@
 (() => {
-  const { loadGoogleMaps, MAP_STYLE, computeIsochrone } = window.FuturaMapsUtils;
+  const { loadGoogleMaps, MAP_STYLE, computeIsochrone, addMapTypeToggle } = window.FuturaMapsUtils;
   const { floorPlanSVG, isoSVG, specList } = window.FuturaTypologyVisuals;
   const PROJECTS = window.FUTURA_PROJECTS;
 
@@ -230,6 +230,7 @@
           mapTypeControl: false,
           streetViewControl: false,
         });
+        addMapTypeToggle(map);
         loadingEl.remove();
 
         new google.maps.Marker({
@@ -247,6 +248,8 @@
           zIndex: 10,
         });
 
+        loadPois(map, p.location);
+
         computeIsochrone(p.location, 20).then((path) => {
           if (!path) return;
           const polygon = new google.maps.Polygon({
@@ -259,7 +262,6 @@
             strokeWeight: 1.5,
           });
           map.fitBounds(polygon.getBounds(), 40);
-          loadPois(map, p.location, polygon);
         });
       })
       .catch(() => {
@@ -267,7 +269,7 @@
       });
   }
 
-  function loadPois(map, location, isochronePolygon) {
+  function loadPois(map, location) {
     const service = new google.maps.places.PlacesService(map);
 
     POI_CATEGORIES.forEach((cat) => {
@@ -276,14 +278,13 @@
       service.nearbySearch(
         {
           location,
-          radius: 15000,
+          radius: 1500,
           type: cat.placeType,
         },
         (results, status) => {
           if (status !== google.maps.places.PlacesServiceStatus.OK || !results) return;
           results.forEach((place) => {
             if (!place.geometry || !place.geometry.location) return;
-            if (!google.maps.geometry.poly.containsLocation(place.geometry.location, isochronePolygon)) return;
 
             const marker = new google.maps.Marker({
               position: place.geometry.location,

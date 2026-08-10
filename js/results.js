@@ -1,5 +1,5 @@
 (() => {
-  const { loadGoogleMaps, MAP_STYLE, haversineKm, computeIsochrone } = window.FuturaMapsUtils;
+  const { loadGoogleMaps, MAP_STYLE, haversineKm, computeIsochrone, addMapTypeToggle } = window.FuturaMapsUtils;
   const PROJECTS = window.FUTURA_PROJECTS;
   const GAM_CENTER = { lat: 9.9333, lng: -84.0833 };
 
@@ -479,6 +479,7 @@
       mapTypeControl: false,
       streetViewControl: false,
     });
+    addMapTypeToggle(map);
     mapLoadingEl.remove();
 
     const supportBounds = new google.maps.LatLngBounds();

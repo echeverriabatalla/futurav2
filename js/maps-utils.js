@@ -127,5 +127,24 @@ window.FuturaMapsUtils = (() => {
       .catch(() => null);
   }
 
-  return { loadGoogleMaps, MAP_STYLE, haversineKm, computeIsochrone, ISOCHRONE_MINUTES };
+  // Botón "Mapa/Satélite" al estilo del control nativo de Google Maps, pero
+  // con el look del sitio — se agrega como control propio del mapa
+  // (map.controls) para que Google lo posicione y espacie automáticamente
+  // junto al zoom, sin pelear con z-index/posicionamiento manual.
+  function addMapTypeToggle(map) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "map-type-toggle";
+    btn.textContent = "Satélite";
+
+    btn.addEventListener("click", () => {
+      const isSatellite = map.getMapTypeId() === google.maps.MapTypeId.SATELLITE;
+      map.setMapTypeId(isSatellite ? google.maps.MapTypeId.ROADMAP : google.maps.MapTypeId.SATELLITE);
+      btn.textContent = isSatellite ? "Satélite" : "Mapa";
+    });
+
+    map.controls[google.maps.ControlPosition.TOP_RIGHT].push(btn);
+  }
+
+  return { loadGoogleMaps, MAP_STYLE, haversineKm, computeIsochrone, ISOCHRONE_MINUTES, addMapTypeToggle };
 })();
