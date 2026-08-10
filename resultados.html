@@ -58,46 +58,69 @@
     <section class="filters-section">
       <div class="wrap">
         <div class="filters-bar" id="filters-bar">
-          <div class="filter-field">
-            <label for="filter-zone">Ubicación</label>
-            <select id="filter-zone"></select>
-          </div>
-          <div class="filter-field">
-            <label for="filter-type">Tipo de propiedad</label>
-            <select id="filter-type"></select>
-          </div>
-          <div class="filter-field">
-            <label for="filter-developer">Desarrolladora</label>
-            <select id="filter-developer"></select>
-          </div>
-          <div class="filter-field">
-            <label for="filter-bedrooms">Habitaciones</label>
-            <select id="filter-bedrooms"></select>
-          </div>
-          <div class="filter-field filter-field--range">
-            <label>Precio <span id="price-range-display"></span></label>
-            <div class="price-range-slider">
-              <div class="price-range-track"></div>
-              <div class="price-range-fill" id="price-range-fill"></div>
-              <input type="range" id="filter-price-min" min="0" max="500000" step="10000" value="0" aria-label="Precio mínimo" />
-              <input type="range" id="filter-price-max" min="0" max="500000" step="10000" value="500000" aria-label="Precio máximo" />
+          <div class="filters-group">
+            <h3 class="filters-group-title">La propiedad que buscás</h3>
+            <div class="filters-group-fields">
+              <div class="filter-field">
+                <label for="filter-zone">Ubicación</label>
+                <select id="filter-zone"></select>
+              </div>
+              <div class="filter-field">
+                <label for="filter-type">Tipo de propiedad</label>
+                <select id="filter-type"></select>
+              </div>
+              <div class="filter-field">
+                <label for="filter-developer">Desarrolladora</label>
+                <select id="filter-developer"></select>
+              </div>
+              <div class="filter-field">
+                <label for="filter-bedrooms">Habitaciones</label>
+                <select id="filter-bedrooms"></select>
+              </div>
+              <div class="filter-field filter-field--range">
+                <label>Precio <span id="price-range-display"></span></label>
+                <div class="price-range-slider">
+                  <div class="price-range-track"></div>
+                  <div class="price-range-fill" id="price-range-fill"></div>
+                  <input type="range" id="filter-price-min" min="0" max="500000" step="10000" value="0" aria-label="Precio mínimo" />
+                  <input type="range" id="filter-price-max" min="0" max="500000" step="10000" value="500000" aria-label="Precio máximo" />
+                </div>
+              </div>
             </div>
           </div>
-          <div class="filter-field filter-field--chips">
-            <label for="filter-schools-input">Escuelas</label>
-            <div class="chip-input" id="filter-schools-chipbox">
-              <div class="chip-input-tags" id="filter-schools-tags"></div>
-              <input type="text" id="filter-schools-input" placeholder="Buscar escuela..." autocomplete="off" />
+
+          <div class="filters-divider"></div>
+
+          <div class="filters-group">
+            <h3 class="filters-group-title">Tus necesidades</h3>
+            <div class="filters-group-fields">
+              <div class="filter-field filter-field--chips">
+                <label for="filter-schools-input">Escuelas</label>
+                <div class="chip-input" id="filter-schools-chipbox">
+                  <div class="chip-input-tags" id="filter-schools-tags"></div>
+                  <input type="text" id="filter-schools-input" placeholder="Buscar escuela..." autocomplete="off" />
+                </div>
+              </div>
+              <div class="filter-field filter-field--chips">
+                <label for="filter-work-input">Lugares de trabajo</label>
+                <div class="chip-input" id="filter-work-chipbox">
+                  <div class="chip-input-tags" id="filter-work-tags"></div>
+                  <input type="text" id="filter-work-input" placeholder="Buscar dirección de trabajo..." autocomplete="off" />
+                </div>
+              </div>
+              <div class="filter-field filter-field--chips">
+                <label for="filter-recreational-input">Recreativo</label>
+                <div class="chip-input" id="filter-recreational-chipbox">
+                  <div class="chip-input-tags" id="filter-recreational-tags"></div>
+                  <input type="text" id="filter-recreational-input" placeholder="Buscar gimnasio, parque..." autocomplete="off" />
+                </div>
+              </div>
             </div>
           </div>
-          <div class="filter-field filter-field--chips">
-            <label for="filter-work-input">Lugares de trabajo</label>
-            <div class="chip-input" id="filter-work-chipbox">
-              <div class="chip-input-tags" id="filter-work-tags"></div>
-              <input type="text" id="filter-work-input" placeholder="Buscar dirección de trabajo..." autocomplete="off" />
-            </div>
+
+          <div class="filters-actions">
+            <button type="button" class="filters-reset" id="filters-reset">Restablecer</button>
           </div>
-          <button type="button" class="filters-reset" id="filters-reset">Restablecer</button>
         </div>
         <p class="filters-note" id="filters-note" hidden></p>
       </div>

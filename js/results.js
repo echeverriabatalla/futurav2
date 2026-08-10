@@ -74,7 +74,17 @@
   // cualquier otro camino (ej. "Explorar proyectos") es un browse en blanco.
   const cameFromAgent = new URLSearchParams(window.location.search).get("from") === "agente";
   const profile = cameFromAgent ? loadProfile() : null;
-  const filters = { zone: "", bedrooms: "0", propertyType: "", developer: "", priceMin: 0, priceMax: PRICE_MAX, schools: [], workPlaces: [] };
+  const filters = {
+    zone: "",
+    bedrooms: "0",
+    propertyType: "",
+    developer: "",
+    priceMin: 0,
+    priceMax: PRICE_MAX,
+    schools: [],
+    workPlaces: [],
+    recreational: [],
+  };
   let seededFromProfile = false;
 
   renderPageCopy(profile);
@@ -82,6 +92,7 @@
   seedFiltersFromProfile(profile);
   const schoolsChipFilter = setupPlaceChipFilter("filter-schools-input", "filter-schools-tags", "schools");
   const workChipFilter = setupPlaceChipFilter("filter-work-input", "filter-work-tags", "workPlaces");
+  const recreationalChipFilter = setupPlaceChipFilter("filter-recreational-input", "filter-recreational-tags", "recreational");
   renderFilterControls();
 
   let map;
@@ -99,6 +110,7 @@
       initMap();
       schoolsChipFilter.activate();
       workChipFilter.activate();
+      recreationalChipFilter.activate();
     })
     .catch(() => {
       mapLoadingEl.textContent = "No pudimos cargar el mapa en este momento.";
@@ -384,6 +396,7 @@
     filters.priceMax = PRICE_MAX;
     filters.schools = [];
     filters.workPlaces = [];
+    filters.recreational = [];
     seededFromProfile = false;
     zoneSelect.value = "";
     typeSelect.value = "";
@@ -392,6 +405,7 @@
     updatePriceUI();
     schoolsChipFilter.renderTags();
     workChipFilter.renderTags();
+    recreationalChipFilter.renderTags();
     updateFiltersNote();
     applyFilters();
   }
@@ -436,6 +450,7 @@
 
     filters.schools.forEach((s) => points.push({ lat: s.lat, lng: s.lng }));
     filters.workPlaces.forEach((w) => points.push({ lat: w.lat, lng: w.lng }));
+    filters.recreational.forEach((r) => points.push({ lat: r.lat, lng: r.lng }));
 
     return points;
   }
@@ -537,6 +552,11 @@
     filters.workPlaces.forEach((w) => {
       filterPinMarkers.push(addDot(w.lat, w.lng, "#4c74e0", "Trabajo: " + w.label, 7));
       bounds.extend({ lat: w.lat, lng: w.lng });
+      hasBounds = true;
+    });
+    filters.recreational.forEach((r) => {
+      filterPinMarkers.push(addDot(r.lat, r.lng, "#e0954c", "Recreativo: " + r.label, 7));
+      bounds.extend({ lat: r.lat, lng: r.lng });
       hasBounds = true;
     });
 
@@ -673,7 +693,8 @@
 
     const destinations = filters.schools
       .map((s) => ({ label: s.label, lat: s.lat, lng: s.lng, kind: "Colegio", color: "#a24fd6" }))
-      .concat(filters.workPlaces.map((w) => ({ label: w.label, lat: w.lat, lng: w.lng, kind: "Trabajo", color: "#4c74e0" })));
+      .concat(filters.workPlaces.map((w) => ({ label: w.label, lat: w.lat, lng: w.lng, kind: "Trabajo", color: "#4c74e0" })))
+      .concat(filters.recreational.map((r) => ({ label: r.label, lat: r.lat, lng: r.lng, kind: "Recreativo", color: "#e0954c" })));
 
     if (!destinations.length) {
       routesPanelEl.hidden = true;
