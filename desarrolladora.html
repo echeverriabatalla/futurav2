@@ -45,6 +45,8 @@
         <h1 id="dev-name"></h1>
         <p class="dev-hero-desc" id="dev-description"></p>
 
+        <div class="dev-hero-rating" id="dev-hero-rating" hidden></div>
+
         <div class="dev-stats">
           <div class="dev-stat">
             <strong id="dev-stat-projects"></strong>
@@ -92,6 +94,43 @@
         </div>
 
         <div class="project-list" id="dev-project-list"></div>
+      </div>
+    </section>
+
+    <!-- ===================== RESEÑAS ===================== -->
+    <section class="results-list-section reviews-section">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Opiniones</span>
+          <h2>Reseñas de otros usuarios</h2>
+        </div>
+
+        <div class="reviews-summary" id="reviews-summary" hidden>
+          <span class="reviews-summary-avg" id="reviews-summary-avg"></span>
+          <div class="reviews-summary-meta">
+            <span id="reviews-summary-stars"></span>
+            <span class="reviews-summary-count" id="reviews-summary-count"></span>
+          </div>
+        </div>
+
+        <div class="review-form-card">
+          <h3 class="review-form-title" id="review-form-title">Dejá tu calificación</h3>
+          <div class="star-input" id="review-star-input">
+            <button type="button" class="star-input-star" data-value="1" aria-label="1 estrella">★</button>
+            <button type="button" class="star-input-star" data-value="2" aria-label="2 estrellas">★</button>
+            <button type="button" class="star-input-star" data-value="3" aria-label="3 estrellas">★</button>
+            <button type="button" class="star-input-star" data-value="4" aria-label="4 estrellas">★</button>
+            <button type="button" class="star-input-star" data-value="5" aria-label="5 estrellas">★</button>
+          </div>
+          <textarea id="review-comment" placeholder="Contá tu experiencia con esta desarrolladora (opcional)"></textarea>
+          <div class="review-form-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="review-submit">Publicar reseña</button>
+            <span class="review-form-note" id="review-form-note" hidden></span>
+          </div>
+        </div>
+
+        <div class="review-list" id="review-list"></div>
+        <p class="review-empty" id="review-empty" hidden>Todavía no hay reseñas para esta desarrolladora. Sé el primero en calificar.</p>
       </div>
     </section>
   </main>
@@ -143,6 +182,10 @@
   <script src="js/maps-utils.js"></script>
   <script src="js/breadcrumb-nav.js"></script>
   <script src="js/project-card.js"></script>
+  <script src="js/mock-auth.js"></script>
+  <script src="js/auth-modal.js"></script>
+  <script src="js/reviews-mock.js"></script>
+  <script src="js/rating-utils.js"></script>
   <script src="js/desarrolladora.js"></script>
 </body>
 </html>

@@ -23,11 +23,15 @@ window.FuturaLeads = (() => {
 
   // payload: { profile, items } — items es un array (no un solo proyecto),
   // así una solicitud con varias tipologías comparadas genera un único
-  // lead consolidado en vez de uno por proyecto.
+  // lead consolidado en vez de uno por proyecto. Cada item puede traer
+  // selected_banks (bancos marcados en proyecto.html para ese proyecto,
+  // ver js/banks-selection.js) — event: "contact_requested" identifica
+  // este tipo de lead para cuando existan otros eventos en el CRM real.
   function submit(payload) {
     const leads = readLeads();
     const lead = {
       id: "lead-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8),
+      event: "contact_requested",
       created_at: new Date().toISOString(),
       profile: payload.profile || null,
       items: payload.items || [],

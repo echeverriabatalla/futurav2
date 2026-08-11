@@ -23,6 +23,7 @@
   renderHeader(developer, activeProjects);
   renderProjectList(activeProjects);
   initMap(activeProjects);
+  initReviews(developer);
 
   function findDeveloper() {
     const params = new URLSearchParams(window.location.search);
@@ -117,5 +118,150 @@
       .catch(() => {
         loadingEl.textContent = "No pudimos cargar el mapa en este momento.";
       });
+  }
+
+  // ===================== Reseñas =====================
+
+  function initReviews(dev) {
+    let selectedRating = 0;
+    let myReview = null;
+
+    const starButtons = Array.from(document.querySelectorAll("#review-star-input .star-input-star"));
+    const commentEl = document.getElementById("review-comment");
+    const submitBtn = document.getElementById("review-submit");
+    const formTitleEl = document.getElementById("review-form-title");
+    const noteEl = document.getElementById("review-form-note");
+
+    starButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedRating = Number(btn.dataset.value);
+        paintStars();
+      });
+    });
+
+    submitBtn.addEventListener("click", () => {
+      if (!selectedRating) {
+        showNote("Elegí una calificación de 1 a 5 estrellas.");
+        return;
+      }
+      window.FuturaAuth.getUser().then((user) => {
+        if (!user) {
+          window.FuturaAuthModal.open(() => submitReview(dev.slug));
+          return;
+        }
+        submitReview(dev.slug);
+      });
+    });
+
+    function submitReview(devSlug) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Publicando...";
+      window.FuturaReviews.upsertReview(devSlug, selectedRating, commentEl.value.trim())
+        .then((row) => {
+          myReview = row;
+          showNote("");
+          loadReviews(dev.slug);
+        })
+        .catch(() => showNote("No pudimos guardar tu reseña. Intentá de nuevo."))
+        .finally(() => {
+          submitBtn.disabled = false;
+          submitBtn.textContent = myReview ? "Actualizar reseña" : "Publicar reseña";
+        });
+    }
+
+    function paintStars() {
+      starButtons.forEach((btn) => {
+        btn.classList.toggle("is-filled", Number(btn.dataset.value) <= selectedRating);
+      });
+    }
+
+    function showNote(msg) {
+      noteEl.textContent = msg || "";
+      noteEl.hidden = !msg;
+    }
+
+    function applyMyReview(row) {
+      myReview = row;
+      if (!row) return;
+      selectedRating = row.rating;
+      paintStars();
+      commentEl.value = row.comentario || "";
+      formTitleEl.textContent = "Tu reseña";
+      submitBtn.textContent = "Actualizar reseña";
+    }
+
+    function loadReviews(devSlug) {
+      window.FuturaReviews.listForDeveloper(devSlug).then((reviews) => {
+        renderSummary(reviews);
+        renderList(reviews);
+      });
+    }
+
+    function renderSummary(reviews) {
+      const { avg, count } = window.FuturaRating.average(reviews);
+
+      const heroEl = document.getElementById("dev-hero-rating");
+      const summaryEl = document.getElementById("reviews-summary");
+
+      if (!count) {
+        heroEl.hidden = true;
+        summaryEl.hidden = true;
+        return;
+      }
+
+      heroEl.hidden = false;
+      heroEl.innerHTML =
+        window.FuturaRating.starsDisplayHTML(avg, { size: "lg" }) +
+        "<strong>" + avg.toFixed(1) + "</strong><span>(" + count + " reseña" + (count === 1 ? "" : "s") + ")</span>";
+
+      summaryEl.hidden = false;
+      document.getElementById("reviews-summary-avg").textContent = avg.toFixed(1);
+      document.getElementById("reviews-summary-stars").innerHTML = window.FuturaRating.starsDisplayHTML(avg, {});
+      document.getElementById("reviews-summary-count").textContent =
+        count + " reseña" + (count === 1 ? "" : "s");
+    }
+
+    function renderList(reviews) {
+      const listEl = document.getElementById("review-list");
+      const emptyEl = document.getElementById("review-empty");
+
+      if (!reviews.length) {
+        listEl.innerHTML = "";
+        emptyEl.hidden = false;
+        return;
+      }
+
+      emptyEl.hidden = true;
+      listEl.innerHTML = reviews
+        .map(
+          (r) =>
+            '<article class="review-item">' +
+            '<div class="review-item-head">' +
+            '<span class="review-item-user">' + escapeHtml(r.user_name) + "</span>" +
+            window.FuturaRating.starsDisplayHTML(r.rating, { size: "sm" }) +
+            "</div>" +
+            '<span class="review-item-date">' + formatFecha(r.fecha) + "</span>" +
+            (r.comentario ? '<p class="review-item-comment">' + escapeHtml(r.comentario) + "</p>" : "") +
+            "</article>"
+        )
+        .join("");
+    }
+
+    function formatFecha(iso) {
+      try {
+        return new Date(iso).toLocaleDateString("es-CR", { year: "numeric", month: "long", day: "numeric" });
+      } catch (e) {
+        return "";
+      }
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.textContent = str == null ? "" : String(str);
+      return div.innerHTML;
+    }
+
+    window.FuturaReviews.getMyReview(dev.slug).then(applyMyReview);
+    loadReviews(dev.slug);
   }
 })();

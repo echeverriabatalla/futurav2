@@ -1,5 +1,14 @@
 // Datos de proyectos de muestra (falsos) compartidos entre resultados.html
 // y proyecto.html para esta versión preliminar de FUTURA.
+//
+// bancosDisponibles: como los proyectos no viven en una tabla de Supabase
+// todavía (son datos estáticos acá, igual que las desarrolladoras en
+// js/developers-data.js), este campo reemplaza a la tabla `bancos_disponibles`
+// pedida originalmente — es la forma de "configurar qué bancos aplican a
+// cada proyecto" mientras no exista una tabla `projects` real en Supabase.
+// El día que los proyectos se muevan a Supabase, este array pasa a ser una
+// columna text[] (o una tabla de unión projects_bancos) sin cambiar la
+// interfaz que usa proyecto.js.
 window.FUTURA_PROJECTS = [
   {
     id: "vista-alta-escazu",
@@ -17,6 +26,7 @@ window.FUTURA_PROJECTS = [
       { id: "a", name: "Tipo A", sqm: 62, bedrooms: 2, bathrooms: 2 },
       { id: "b", name: "Tipo B", sqm: 88, bedrooms: 3, bathrooms: 2.5 },
     ],
+    bancosDisponibles: ["BAC Credomatic", "Banco Nacional", "Banco de Costa Rica", "Scotiabank"],
   },
   {
     id: "bosques-santa-ana",
@@ -34,6 +44,7 @@ window.FUTURA_PROJECTS = [
       { id: "a", name: "Tipo A", sqm: 110, bedrooms: 3, bathrooms: 3 },
       { id: "b", name: "Tipo B", sqm: 145, bedrooms: 4, bathrooms: 3.5 },
     ],
+    bancosDisponibles: ["BAC Credomatic", "Banco Popular", "Davivienda"],
   },
   {
     id: "terrazas-curridabat",
@@ -51,6 +62,7 @@ window.FUTURA_PROJECTS = [
       { id: "a", name: "Tipo A", sqm: 58, bedrooms: 2, bathrooms: 1 },
       { id: "b", name: "Tipo B", sqm: 68, bedrooms: 2, bathrooms: 2 },
     ],
+    bancosDisponibles: ["Banco Nacional", "Banco de Costa Rica", "Banco Promerica", "Scotiabank"],
   },
   {
     id: "alto-heredia",
@@ -68,6 +80,7 @@ window.FUTURA_PROJECTS = [
       { id: "a", name: "Tipo A", sqm: 95, bedrooms: 3, bathrooms: 2 },
       { id: "b", name: "Tipo B", sqm: 105, bedrooms: 3, bathrooms: 2.5 },
     ],
+    bancosDisponibles: ["BAC Credomatic", "Banco Nacional", "Banco Popular"],
   },
   {
     id: "cerro-verde",
@@ -85,6 +98,7 @@ window.FUTURA_PROJECTS = [
       { id: "a", name: "Tipo A", sqm: 165, bedrooms: 4, bathrooms: 3.5 },
       { id: "b", name: "Penthouse", sqm: 210, bedrooms: 4, bathrooms: 4.5 },
     ],
+    bancosDisponibles: ["BAC Credomatic", "Scotiabank", "Banco Lafise", "Banco de Costa Rica"],
   },
   {
     id: "villas-del-roble",
@@ -102,6 +116,7 @@ window.FUTURA_PROJECTS = [
       { id: "a", name: "Casa 3 hab.", sqm: 145, bedrooms: 3, bathrooms: 2.5 },
       { id: "b", name: "Casa 4 hab.", sqm: 180, bedrooms: 4, bathrooms: 3 },
     ],
+    bancosDisponibles: ["Banco Nacional", "Banco de Costa Rica", "Banco Popular", "Davivienda"],
   },
   {
     id: "terrenos-vista-verde",
@@ -119,5 +134,6 @@ window.FUTURA_PROJECTS = [
       { id: "a", name: "Lote 300 m²", sqm: 300, bedrooms: 0, bathrooms: 0 },
       { id: "b", name: "Lote 450 m²", sqm: 450, bedrooms: 0, bathrooms: 0 },
     ],
+    bancosDisponibles: ["Banco Nacional", "Banco de Costa Rica"],
   },
 ];

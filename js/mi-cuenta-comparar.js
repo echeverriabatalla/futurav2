@@ -177,6 +177,7 @@
       bedrooms: item.typology.bedrooms,
       bathrooms: item.typology.bathrooms,
       price_from: item.project.priceFrom,
+      selected_banks: window.FuturaBankSelection.get(item.project.id),
     }));
 
     leadBtn.disabled = true;

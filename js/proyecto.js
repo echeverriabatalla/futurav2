@@ -28,6 +28,7 @@
   renderHeader(project);
   renderTitleBar(project);
   renderTypologies(project);
+  renderBanks(project);
   renderAmenities(project);
   initMap(project);
 
@@ -65,6 +66,33 @@
     document.getElementById("project-zone").textContent = p.zone;
     document.getElementById("project-price").textContent = "Desde $" + p.priceFrom.toLocaleString("en-US");
     document.getElementById("project-delivery").textContent = "Entrega " + p.delivery;
+  }
+
+  function renderBanks(p) {
+    const banks = p.bancosDisponibles || [];
+    const section = document.getElementById("banks-section");
+    if (!banks.length) {
+      section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+
+    const grid = document.getElementById("banks-grid");
+    grid.innerHTML = "";
+    const selected = new Set(window.FuturaBankSelection.get(p.id));
+
+    banks.forEach((bank) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "bank-chip" + (selected.has(bank) ? " is-active" : "");
+      chip.textContent = (selected.has(bank) ? "✓ " : "") + bank;
+      chip.addEventListener("click", () => {
+        const nowSelected = window.FuturaBankSelection.toggle(p.id, bank);
+        chip.classList.toggle("is-active", nowSelected);
+        chip.textContent = (nowSelected ? "✓ " : "") + bank;
+      });
+      grid.appendChild(chip);
+    });
   }
 
   function renderAmenities(p) {

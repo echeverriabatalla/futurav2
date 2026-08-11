@@ -12,20 +12,31 @@
   })).sort((a, b) => a.dev.name.localeCompare(b.dev.name));
 
   listEl.innerHTML = "";
-  rows.forEach(({ dev, activeCount }) => {
-    const card = document.createElement("a");
-    card.className = "developer-card";
-    card.href = window.FuturaBreadcrumb.withOrigin("desarrolladora.html?dev=" + dev.slug, "desarrolladoras");
-    card.innerHTML =
-      "<div>" +
-      '<h3 class="developer-card-name">' + dev.name + "</h3>" +
-      '<p class="developer-card-count">' +
-      activeCount +
-      " proyecto" + (activeCount === 1 ? "" : "s") +
-      " activo" + (activeCount === 1 ? "" : "s") +
-      "</p>" +
-      "</div>" +
-      '<span class="developer-card-arrow" aria-hidden="true">→</span>';
-    listEl.appendChild(card);
+
+  // El rating promedio depende de window.FuturaReviews (async), así que se
+  // resuelven todas las reviews en paralelo antes de pintar las tarjetas.
+  Promise.all(rows.map(({ dev }) => window.FuturaReviews.listForDeveloper(dev.slug))).then((allReviews) => {
+    rows.forEach(({ dev, activeCount }, i) => {
+      const { avg, count } = window.FuturaRating.average(allReviews[i]);
+      const card = document.createElement("a");
+      card.className = "developer-card";
+      card.href = window.FuturaBreadcrumb.withOrigin("desarrolladora.html?dev=" + dev.slug, "desarrolladoras");
+      card.innerHTML =
+        "<div>" +
+        '<h3 class="developer-card-name">' + dev.name + "</h3>" +
+        '<p class="developer-card-count">' +
+        activeCount +
+        " proyecto" + (activeCount === 1 ? "" : "s") +
+        " activo" + (activeCount === 1 ? "" : "s") +
+        "</p>" +
+        (count
+          ? '<p class="developer-card-rating">' +
+            window.FuturaRating.starsDisplayHTML(avg, { size: "sm" }) +
+            "<span>" + avg.toFixed(1) + " (" + count + " reseña" + (count === 1 ? "" : "s") + ")</span></p>"
+          : "") +
+        "</div>" +
+        '<span class="developer-card-arrow" aria-hidden="true">→</span>';
+      listEl.appendChild(card);
+    });
   });
 })();
