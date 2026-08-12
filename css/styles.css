@@ -1947,6 +1947,86 @@ section {
   font-size: 1.15rem;
 }
 
+/* ---------- Modal de solicitud (bancos por proyecto) ---------- */
+
+.lead-modal {
+  max-width: 640px;
+}
+
+.lead-modal-body {
+  padding: 22px 26px 8px;
+  overflow-y: auto;
+}
+
+.lead-project-block {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--bg-light-alt);
+}
+
+.lead-project-block:first-child {
+  padding-top: 4px;
+}
+
+.lead-project-block:last-child {
+  border-bottom: none;
+}
+
+.lead-project-title {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: var(--text-dark);
+}
+
+.lead-project-title span {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted-onlight);
+  margin-left: 8px;
+}
+
+.lead-project-typologies {
+  margin-top: 6px;
+  font-size: 0.86rem;
+  color: var(--text-muted-onlight);
+  list-style: none;
+}
+
+.lead-project-banks {
+  margin-top: 14px;
+}
+
+.lead-project-banks-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted-onlight);
+  margin-bottom: 8px;
+}
+
+.lead-project-banks-empty {
+  margin-top: 12px;
+  font-size: 0.84rem;
+  color: var(--text-muted-onlight);
+  font-style: italic;
+}
+
+.lead-modal-footer {
+  padding: 18px 26px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.lead-modal-note {
+  font-size: 0.84rem;
+  color: #c0392b;
+  font-weight: 600;
+  margin-right: auto;
+}
+
 /* ---------- Modal de login / crear cuenta ---------- */
 
 .auth-modal {

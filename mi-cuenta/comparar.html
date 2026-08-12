@@ -79,8 +79,8 @@
           <div class="lead-request-info">
             <h3>¿Te interesan estas opciones?</h3>
             <p id="lead-request-copy">
-              Enviamos tu perfil de FUTURA y esta selección a las desarrolladoras correspondientes, en una sola
-              solicitud — no hace falta llenar nada más.
+              Antes de enviar, elegí los bancos de tu interés para cada proyecto — armamos una solicitud
+              independiente para cada desarrolladora con tu perfil de FUTURA.
             </p>
           </div>
           <button type="button" class="btn btn-primary" id="lead-submit-btn">Solicitar información</button>
@@ -88,6 +88,21 @@
       </div>
     </section>
   </main>
+
+  <!-- ===================== MODAL: BANCOS POR PROYECTO ===================== -->
+  <div class="compare-overlay" id="lead-modal-overlay" hidden>
+    <div class="compare-modal lead-modal" role="dialog" aria-modal="true" aria-labelledby="lead-modal-title">
+      <header class="compare-modal-header">
+        <h3 id="lead-modal-title">Solicitar información</h3>
+        <button type="button" class="agent-close" id="lead-modal-close" aria-label="Cerrar">&times;</button>
+      </header>
+      <div class="lead-modal-body" id="lead-modal-body"></div>
+      <footer class="lead-modal-footer">
+        <p class="lead-modal-note" id="lead-modal-note" hidden></p>
+        <button type="button" class="btn btn-primary" id="lead-modal-submit">Enviar solicitudes</button>
+      </footer>
+    </div>
+  </div>
 
   <footer class="site-footer" id="contacto">
     <div class="wrap">

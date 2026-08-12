@@ -18,6 +18,12 @@
   const leadBtn = document.getElementById("lead-submit-btn");
   const LEAD_COPY_DEFAULT = leadCopyEl.textContent;
 
+  const leadModalOverlay = document.getElementById("lead-modal-overlay");
+  const leadModalBody = document.getElementById("lead-modal-body");
+  const leadModalNote = document.getElementById("lead-modal-note");
+  const leadModalSubmitBtn = document.getElementById("lead-modal-submit");
+  const leadModalCloseBtn = document.getElementById("lead-modal-close");
+
   const selected = new Map();
 
   window.FuturaBreadcrumb.render({
@@ -27,7 +33,15 @@
     fallback: { href: "../resultados.html", label: "Resultados" },
   });
 
-  leadBtn.addEventListener("click", submitLead);
+  leadBtn.addEventListener("click", openLeadModal);
+  leadModalCloseBtn.addEventListener("click", closeLeadModal);
+  leadModalOverlay.addEventListener("click", (e) => {
+    if (e.target === leadModalOverlay) closeLeadModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !leadModalOverlay.hidden) closeLeadModal();
+  });
+  leadModalSubmitBtn.addEventListener("click", submitLeadModal);
 
   signinBtn.addEventListener("click", () => window.FuturaAuthModal.open(loadPage));
   signedOutBtn.addEventListener("click", () => window.FuturaAuthModal.open(loadPage));
@@ -166,33 +180,111 @@
     leadCopyEl.textContent = LEAD_COPY_DEFAULT;
   }
 
-  function submitLead() {
-    const items = Array.from(selected.values()).map((item) => ({
-      project_id: item.project.id,
-      project_name: item.project.name,
-      developer_name: item.project.developer.name,
-      typology_id: item.typology.id,
-      typology_name: item.typology.name,
-      sqm: item.typology.sqm,
-      bedrooms: item.typology.bedrooms,
-      bathrooms: item.typology.bathrooms,
-      price_from: item.project.priceFrom,
-      selected_banks: window.FuturaBankSelection.get(item.project.id),
-    }));
+  // Agrupa las tipologías marcadas por proyecto: cada proyecto tiene sus
+  // propios bancos disponibles, así que la solicitud se arma (y se manda)
+  // por proyecto, no como un solo lead con todo mezclado.
+  function groupSelectedByProject() {
+    const groups = new Map();
+    Array.from(selected.values()).forEach((item) => {
+      if (!groups.has(item.project.id)) {
+        groups.set(item.project.id, { project: item.project, typologies: [] });
+      }
+      groups.get(item.project.id).typologies.push(item.typology);
+    });
+    return Array.from(groups.values());
+  }
 
-    leadBtn.disabled = true;
-    leadBtn.textContent = "Enviando...";
+  function openLeadModal() {
+    renderLeadModal(groupSelectedByProject());
+    leadModalNote.hidden = true;
+    leadModalSubmitBtn.disabled = false;
+    leadModalSubmitBtn.textContent = "Enviar solicitudes";
+    leadModalOverlay.hidden = false;
+  }
 
-    window.FuturaLeads.submit({ profile: loadAgentProfile(), items })
+  function closeLeadModal() {
+    leadModalOverlay.hidden = true;
+  }
+
+  function renderLeadModal(groups) {
+    leadModalBody.innerHTML = "";
+    groups.forEach((group) => {
+      const banks = group.project.bancosDisponibles || [];
+      const selectedBanks = new Set(window.FuturaBankSelection.get(group.project.id));
+
+      const section = document.createElement("section");
+      section.className = "lead-project-block";
+      section.innerHTML =
+        '<h4 class="lead-project-title">' +
+        group.project.name +
+        ' <span>· ' + group.project.developer.name + "</span></h4>" +
+        '<ul class="lead-project-typologies">' +
+        group.typologies.map((t) => "<li>" + t.name + " · " + t.sqm + " m² · " + t.bedrooms + " hab.</li>").join("") +
+        "</ul>" +
+        (banks.length
+          ? '<div class="lead-project-banks"><p class="lead-project-banks-label">Bancos disponibles</p><div class="banks-grid"></div></div>'
+          : '<p class="lead-project-banks-empty">Este proyecto no tiene bancos con convenio registrados.</p>');
+      leadModalBody.appendChild(section);
+
+      if (!banks.length) return;
+
+      const grid = section.querySelector(".banks-grid");
+      banks.forEach((bank) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "bank-chip" + (selectedBanks.has(bank) ? " is-active" : "");
+        chip.textContent = (selectedBanks.has(bank) ? "✓ " : "") + bank;
+        chip.addEventListener("click", () => {
+          const nowSelected = window.FuturaBankSelection.toggle(group.project.id, bank);
+          chip.classList.toggle("is-active", nowSelected);
+          chip.textContent = (nowSelected ? "✓ " : "") + bank;
+        });
+        grid.appendChild(chip);
+      });
+    });
+  }
+
+  function submitLeadModal() {
+    const groups = groupSelectedByProject();
+    const profile = loadAgentProfile();
+
+    leadModalNote.hidden = true;
+    leadModalSubmitBtn.disabled = true;
+    leadModalSubmitBtn.textContent = "Enviando...";
+
+    Promise.all(
+      groups.map((group) =>
+        window.FuturaLeads.submit({
+          profile,
+          project_id: group.project.id,
+          project_name: group.project.name,
+          developer_name: group.project.developer.name,
+          selected_banks: window.FuturaBankSelection.get(group.project.id),
+          items: group.typologies.map((t) => ({
+            typology_id: t.id,
+            typology_name: t.name,
+            sqm: t.sqm,
+            bedrooms: t.bedrooms,
+            bathrooms: t.bathrooms,
+            price_from: group.project.priceFrom,
+          })),
+        })
+      )
+    )
       .then(() => {
+        closeLeadModal();
         leadBtn.textContent = "✓ Solicitud enviada";
         leadCopyEl.textContent =
-          "Listo — enviamos tu perfil y las " + items.length + " tipologías seleccionadas en una sola solicitud.";
+          "Listo — enviamos " + groups.length + " solicitud" + (groups.length === 1 ? "" : "es") +
+          " (una por desarrolladora) con tu perfil y los bancos que elegiste.";
       })
       .catch(() => {
-        leadBtn.disabled = false;
-        leadBtn.textContent = "Solicitar información";
-        leadCopyEl.textContent = "No se pudo enviar la solicitud. Intentá de nuevo.";
+        leadModalNote.textContent = "No se pudo enviar alguna solicitud. Intentá de nuevo.";
+        leadModalNote.hidden = false;
+      })
+      .finally(() => {
+        leadModalSubmitBtn.disabled = false;
+        leadModalSubmitBtn.textContent = "Enviar solicitudes";
       });
   }
 })();
