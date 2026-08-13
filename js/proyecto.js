@@ -28,8 +28,8 @@
   renderHeader(project);
   renderTitleBar(project);
   renderTypologies(project);
-  renderBanks(project);
   renderAmenities(project);
+  renderBanks(project);
   initMap(project);
 
   function findProject() {
