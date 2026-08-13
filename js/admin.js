@@ -1,7 +1,9 @@
 // Panel interno: lista todos los proyectos con un switch para marcar/
-// desmarcar "destacado" (ver js/featured-mock.js) y un botón para editar
+// desmarcar "destacado" (ver js/featured-mock.js), un botón para editar
 // las amenidades de cada proyecto (nombre, descripción, ícono y fotos —
-// ver js/amenities-mock.js).
+// ver js/amenities-mock.js), y el directorio de bancos (tasa, plazo,
+// financiamiento, requisitos — ver js/banks-mock.js), ya que estos datos
+// cambian seguido y no hay una fuente automática confiable.
 (() => {
   const PROJECTS = window.FUTURA_PROJECTS || [];
   const listEl = document.getElementById("admin-list");
@@ -115,6 +117,80 @@
 
     window.FuturaAmenities.save(editingProject.id, amenities);
     closeAmenitiesModal();
+  }
+
+  // ---------- Directorio de bancos ----------
+
+  const banksListEl = document.getElementById("admin-banks-list");
+  const bankOverlay = document.getElementById("bank-modal-overlay");
+  const bankTitle = document.getElementById("bank-modal-title");
+  const bankCloseBtn = document.getElementById("bank-modal-close");
+  const bankSaveBtn = document.getElementById("bank-save-btn");
+  const bankRateInput = document.getElementById("bank-edit-rate");
+  const bankTermInput = document.getElementById("bank-edit-term");
+  const bankFinancingInput = document.getElementById("bank-edit-financing");
+  const bankRequirementsInput = document.getElementById("bank-edit-requirements");
+
+  let editingBankName = null;
+
+  if (banksListEl) {
+    renderBanksList();
+
+    bankCloseBtn.addEventListener("click", closeBankModal);
+    bankOverlay.addEventListener("click", (e) => {
+      if (e.target === bankOverlay) closeBankModal();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !bankOverlay.hidden) closeBankModal();
+    });
+    bankSaveBtn.addEventListener("click", saveBank);
+  }
+
+  function renderBanksList() {
+    banksListEl.innerHTML = "";
+    window.FuturaBanks.list().forEach((bank) => {
+      const row = document.createElement("div");
+      row.className = "admin-row";
+      row.innerHTML =
+        '<div class="admin-row-info">' +
+        "<h3>" + escapeHtml(bank.name) + "</h3>" +
+        "<p>" + bank.interestRate + "% anual · Plazo hasta " + bank.maxTermYears + " años · Financia hasta " + bank.financingPercent + "%</p>" +
+        "</div>" +
+        '<div class="admin-row-actions">' +
+        '<button type="button" class="btn btn-ghost btn-sm admin-edit-bank-btn">Editar</button>' +
+        "</div>";
+
+      row.querySelector(".admin-edit-bank-btn").addEventListener("click", () => openBankModal(bank));
+
+      banksListEl.appendChild(row);
+    });
+  }
+
+  function openBankModal(bank) {
+    editingBankName = bank.name;
+    bankTitle.textContent = "Editar banco — " + bank.name;
+    bankRateInput.value = bank.interestRate;
+    bankTermInput.value = bank.maxTermYears;
+    bankFinancingInput.value = bank.financingPercent;
+    bankRequirementsInput.value = bank.requirements || "";
+    bankOverlay.hidden = false;
+  }
+
+  function closeBankModal() {
+    bankOverlay.hidden = true;
+    editingBankName = null;
+  }
+
+  function saveBank() {
+    if (!editingBankName) return;
+    window.FuturaBanks.save(editingBankName, {
+      interestRate: Number(bankRateInput.value) || 0,
+      maxTermYears: Number(bankTermInput.value) || 1,
+      financingPercent: Number(bankFinancingInput.value) || 0,
+      requirements: bankRequirementsInput.value.trim(),
+    });
+    closeBankModal();
+    renderBanksList();
   }
 
   // Atributo-seguro: a diferencia del truco textContent→innerHTML, también

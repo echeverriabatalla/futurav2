@@ -69,30 +69,97 @@
   }
 
   function renderBanks(p) {
-    const banks = p.bancosDisponibles || [];
+    const bankNames = p.bancosDisponibles || [];
     const section = document.getElementById("banks-section");
-    if (!banks.length) {
+    if (!bankNames.length) {
       section.hidden = true;
       return;
     }
-    section.hidden = false;
 
     const grid = document.getElementById("banks-grid");
     grid.innerHTML = "";
     const selected = new Set(window.FuturaBankSelection.get(p.id));
 
-    banks.forEach((bank) => {
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "bank-chip" + (selected.has(bank) ? " is-active" : "");
-      chip.textContent = (selected.has(bank) ? "✓ " : "") + bank;
-      chip.addEventListener("click", () => {
-        const nowSelected = window.FuturaBankSelection.toggle(p.id, bank);
-        chip.classList.toggle("is-active", nowSelected);
-        chip.textContent = (nowSelected ? "✓ " : "") + bank;
+    bankNames.forEach((name) => {
+      const bank = window.FuturaBanks.get(name);
+      if (!bank) return; // banco sin datos en el directorio (window.FUTURA_BANKS): no hay tarjeta que armar
+
+      const isSelected = selected.has(bank.name);
+      const defaultTermYears = Math.min(30, bank.maxTermYears);
+
+      const card = document.createElement("article");
+      card.className = "bank-card";
+      card.innerHTML =
+        '<div class="bank-card-head">' +
+        "<h3>" + escapeHtml(bank.name) + "</h3>" +
+        '<label class="bank-card-check"><input type="checkbox"' +
+        (isSelected ? " checked" : "") +
+        " /> Me interesa</label>" +
+        "</div>" +
+        '<div class="bank-card-stats">' +
+        "<div><strong>" + bank.interestRate + "%</strong><span>Tasa anual</span></div>" +
+        "<div><strong>" + bank.maxTermYears + " años</strong><span>Plazo máximo</span></div>" +
+        "<div><strong>" + bank.financingPercent + "%</strong><span>Financiamiento</span></div>" +
+        "</div>" +
+        (bank.requirements
+          ? '<p class="bank-card-requirements"><strong>Requisitos:</strong> ' + escapeHtml(bank.requirements) + "</p>"
+          : "") +
+        '<div class="bank-card-calculator">' +
+        "<h4>Calculá tu cuota estimada</h4>" +
+        '<div class="bank-calc-fields">' +
+        '<label>Precio de la propiedad ($)<input type="number" class="bank-calc-price" min="0" step="1000" value="' +
+        p.priceFrom +
+        '" /></label>' +
+        '<label>Prima / enganche (%)<input type="number" class="bank-calc-down" min="0" max="100" step="1" value="20" /></label>' +
+        '<label>Plazo (años)<input type="number" class="bank-calc-term" min="1" max="' +
+        bank.maxTermYears +
+        '" step="1" value="' +
+        defaultTermYears +
+        '" /></label>' +
+        "</div>" +
+        '<div class="bank-calc-result"><span>Cuota mensual estimada</span><strong class="bank-calc-monthly"></strong></div>' +
+        "</div>";
+
+      card.querySelector(".bank-card-check input").addEventListener("change", () => {
+        window.FuturaBankSelection.toggle(p.id, bank.name);
       });
-      grid.appendChild(chip);
+
+      initBankCalculator(card, bank);
+
+      grid.appendChild(card);
     });
+
+    section.hidden = grid.children.length === 0;
+  }
+
+  function initBankCalculator(card, bank) {
+    const priceInput = card.querySelector(".bank-calc-price");
+    const downInput = card.querySelector(".bank-calc-down");
+    const termInput = card.querySelector(".bank-calc-term");
+    const resultEl = card.querySelector(".bank-calc-monthly");
+
+    function update() {
+      const price = Math.max(0, Number(priceInput.value) || 0);
+      const downPercent = Math.min(100, Math.max(0, Number(downInput.value) || 0));
+      const termYears = Math.min(bank.maxTermYears, Math.max(1, Number(termInput.value) || 1));
+      const monthly = estimateMonthlyPayment(price, downPercent, termYears, bank.interestRate);
+      resultEl.textContent = "$" + Math.round(monthly).toLocaleString("en-US");
+    }
+
+    [priceInput, downInput, termInput].forEach((input) => input.addEventListener("input", update));
+    update();
+  }
+
+  // Amortización estándar: cuota = P · r(1+r)^n / ((1+r)^n - 1), con
+  // P = precio menos la prima, r = tasa mensual, n = plazo en meses.
+  function estimateMonthlyPayment(price, downPercent, termYears, annualRatePercent) {
+    const principal = price * (1 - downPercent / 100);
+    const monthlyRate = annualRatePercent / 100 / 12;
+    const months = termYears * 12;
+    if (principal <= 0 || months <= 0) return 0;
+    if (monthlyRate === 0) return principal / months;
+    const factor = Math.pow(1 + monthlyRate, months);
+    return (principal * monthlyRate * factor) / (factor - 1);
   }
 
   function renderAmenities(p) {

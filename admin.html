@@ -38,17 +38,32 @@
     <section class="results-hero">
       <div class="wrap">
         <span class="eyebrow">Equipo FUTURA</span>
-        <h1>Proyectos destacados</h1>
+        <h1>Panel interno</h1>
         <p class="results-hero-lead">
-          Marcá qué proyectos aparecen en el carrusel de "Proyectos destacados" de la página principal. Los cambios
-          se guardan al instante.
+          Administrá qué proyectos aparecen destacados, sus amenidades y la información de los bancos disponibles.
+          Los cambios se guardan al instante.
         </p>
       </div>
     </section>
 
     <section class="results-list-section">
       <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Proyectos</span>
+          <h2>Destacados y amenidades</h2>
+        </div>
         <div class="admin-list" id="admin-list"></div>
+      </div>
+    </section>
+
+    <section class="results-list-section">
+      <div class="wrap">
+        <div class="section-head">
+          <span class="eyebrow">Financiamiento</span>
+          <h2>Bancos</h2>
+          <p>Tasa, plazo, financiamiento y requisitos — no hay una fuente automática confiable para esto, así que se edita a mano acá.</p>
+        </div>
+        <div class="admin-list" id="admin-banks-list"></div>
       </div>
     </section>
   </main>
@@ -68,6 +83,27 @@
     </div>
   </div>
 
+  <!-- ===================== MODAL: EDITAR BANCO ===================== -->
+  <div class="compare-overlay" id="bank-modal-overlay" hidden>
+    <div class="compare-modal amenities-modal" role="dialog" aria-modal="true" aria-labelledby="bank-modal-title">
+      <header class="compare-modal-header">
+        <h3 id="bank-modal-title">Editar banco</h3>
+        <button type="button" class="agent-close" id="bank-modal-close" aria-label="Cerrar">&times;</button>
+      </header>
+      <div class="amenities-modal-body" id="bank-modal-body">
+        <div class="amenity-edit-row-fields">
+          <label class="amenity-edit-field">Tasa de interés anual (%)<input type="number" id="bank-edit-rate" min="0" max="100" step="0.05" /></label>
+          <label class="amenity-edit-field">Plazo máximo (años)<input type="number" id="bank-edit-term" min="1" max="40" step="1" /></label>
+        </div>
+        <label class="amenity-edit-field">Financiamiento disponible (%)<input type="number" id="bank-edit-financing" min="0" max="100" step="1" /></label>
+        <label class="amenity-edit-field">Requisitos básicos<textarea id="bank-edit-requirements" rows="3"></textarea></label>
+      </div>
+      <footer class="lead-modal-footer">
+        <button type="button" class="btn btn-primary" id="bank-save-btn">Guardar cambios</button>
+      </footer>
+    </div>
+  </div>
+
   <footer class="site-footer" id="contacto">
     <div class="wrap">
       <div class="footer-bottom">
@@ -80,6 +116,8 @@
   <script src="js/featured-mock.js"></script>
   <script src="js/amenity-icons.js"></script>
   <script src="js/amenities-mock.js"></script>
+  <script src="js/banks-data.js"></script>
+  <script src="js/banks-mock.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>
