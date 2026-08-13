@@ -30,7 +30,7 @@ window.FuturaProjectCard = (() => {
       "<span>" + project.bedrooms + "</span><span>Entrega " + project.delivery + "</span>" +
       "</div>" +
       '<div class="project-amenities">' +
-      project.amenities.map((a) => '<span class="project-amenity">' + a + "</span>").join("") +
+      project.amenities.map((a) => '<span class="project-amenity">' + a.name + "</span>").join("") +
       "</div>" +
       '<a class="project-card-link" href="' + link + '">Ver proyecto →</a>';
 

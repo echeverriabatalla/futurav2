@@ -53,6 +53,21 @@
     </section>
   </main>
 
+  <!-- ===================== MODAL: EDITAR AMENIDADES ===================== -->
+  <div class="compare-overlay" id="amenities-modal-overlay" hidden>
+    <div class="compare-modal amenities-modal" role="dialog" aria-modal="true" aria-labelledby="amenities-modal-title">
+      <header class="compare-modal-header">
+        <h3 id="amenities-modal-title">Amenidades</h3>
+        <button type="button" class="agent-close" id="amenities-modal-close" aria-label="Cerrar">&times;</button>
+      </header>
+      <div class="amenities-modal-body" id="amenities-modal-body"></div>
+      <footer class="amenities-modal-footer">
+        <button type="button" class="amenities-add-btn" id="amenities-add-btn">+ Agregar amenidad</button>
+        <button type="button" class="btn btn-primary" id="amenities-save-btn">Guardar cambios</button>
+      </footer>
+    </div>
+  </div>
+
   <footer class="site-footer" id="contacto">
     <div class="wrap">
       <div class="footer-bottom">
@@ -63,6 +78,8 @@
 
   <script src="js/projects-data.js"></script>
   <script src="js/featured-mock.js"></script>
+  <script src="js/amenity-icons.js"></script>
+  <script src="js/amenities-mock.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>

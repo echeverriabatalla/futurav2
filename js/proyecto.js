@@ -98,12 +98,74 @@
   function renderAmenities(p) {
     const grid = document.getElementById("amenities-grid");
     grid.innerHTML = "";
-    p.amenities.forEach((a) => {
-      const card = document.createElement("div");
+    window.FuturaAmenities.list(p).forEach((a) => {
+      const photos = a.photos || [];
+      const card = document.createElement("article");
       card.className = "amenity-card";
-      card.innerHTML = '<span class="amenity-dot"></span><span>' + a + "</span>";
+      card.innerHTML =
+        '<div class="amenity-card-visual">' +
+        (photos.length
+          ? amenityGalleryHTML(photos, a.name)
+          : '<div class="amenity-card-icon">' + window.FuturaAmenityIcons.iconSVG(a.icon) + "</div>") +
+        "</div>" +
+        '<div class="amenity-card-body">' +
+        "<h3>" + escapeHtml(a.name) + "</h3>" +
+        (a.description ? "<p>" + escapeHtml(a.description) + "</p>" : "") +
+        "</div>";
       grid.appendChild(card);
+
+      if (photos.length > 1) initAmenityGallery(card);
     });
+  }
+
+  function amenityGalleryHTML(photos, name) {
+    return (
+      '<div class="amenity-gallery">' +
+      '<div class="amenity-gallery-track">' +
+      photos.map((src) => '<img src="' + escapeHtml(src) + '" alt="' + escapeHtml(name) + '" loading="lazy" />').join("") +
+      "</div>" +
+      (photos.length > 1
+        ? '<button type="button" class="amenity-gallery-arrow amenity-gallery-prev" aria-label="Foto anterior">‹</button>' +
+          '<button type="button" class="amenity-gallery-arrow amenity-gallery-next" aria-label="Foto siguiente">›</button>' +
+          '<div class="amenity-gallery-dots">' +
+          photos.map((_, i) => '<span class="amenity-gallery-dot' + (i === 0 ? " is-active" : "") + '"></span>').join("") +
+          "</div>"
+        : "") +
+      "</div>"
+    );
+  }
+
+  function initAmenityGallery(card) {
+    const gallery = card.querySelector(".amenity-gallery");
+    const track = gallery.querySelector(".amenity-gallery-track");
+    const dots = Array.from(gallery.querySelectorAll(".amenity-gallery-dot"));
+    let index = 0;
+
+    function update() {
+      track.style.transform = "translateX(-" + index * 100 + "%)";
+      dots.forEach((d, i) => d.classList.toggle("is-active", i === index));
+    }
+
+    gallery.querySelector(".amenity-gallery-prev").addEventListener("click", () => {
+      index = (index - 1 + dots.length) % dots.length;
+      update();
+    });
+    gallery.querySelector(".amenity-gallery-next").addEventListener("click", () => {
+      index = (index + 1) % dots.length;
+      update();
+    });
+  }
+
+  // A diferencia del truco textContent→innerHTML (que no escapa comillas),
+  // esto es seguro también dentro de atributos como src="..."/alt="...",
+  // que es donde se usa para las fotos de amenidades cargadas desde admin.
+  function escapeHtml(str) {
+    return String(str == null ? "" : str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
   function renderTypologies(p) {
