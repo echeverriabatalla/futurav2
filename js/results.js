@@ -494,6 +494,7 @@
       center: profile && profile.zoneGeo ? { lat: profile.zoneGeo.lat, lng: profile.zoneGeo.lng } : GAM_CENTER,
       zoom: 12,
       styles: MAP_STYLE,
+      mapTypeId: google.maps.MapTypeId.SATELLITE,
       disableDefaultUI: true,
       zoomControl: true,
       mapTypeControl: false,

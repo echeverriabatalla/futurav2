@@ -135,12 +135,20 @@ window.FuturaMapsUtils = (() => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "map-type-toggle";
-    btn.textContent = "Satélite";
+
+    // El label refleja el mapTypeId real del mapa en vez de asumir un
+    // estado inicial fijo — los mapas de FUTURA arrancan en satélite, pero
+    // esto sigue funcionando igual si algún mapa arranca en roadmap.
+    function syncLabel() {
+      const isSatellite = map.getMapTypeId() === google.maps.MapTypeId.SATELLITE;
+      btn.textContent = isSatellite ? "Mapa" : "Satélite";
+    }
+    syncLabel();
 
     btn.addEventListener("click", () => {
       const isSatellite = map.getMapTypeId() === google.maps.MapTypeId.SATELLITE;
       map.setMapTypeId(isSatellite ? google.maps.MapTypeId.ROADMAP : google.maps.MapTypeId.SATELLITE);
-      btn.textContent = isSatellite ? "Satélite" : "Mapa";
+      syncLabel();
     });
 
     map.controls[google.maps.ControlPosition.TOP_RIGHT].push(btn);

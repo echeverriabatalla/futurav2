@@ -382,6 +382,7 @@
           center: p.location,
           zoom: 14,
           styles: MAP_STYLE,
+          mapTypeId: google.maps.MapTypeId.SATELLITE,
           disableDefaultUI: true,
           zoomControl: true,
           mapTypeControl: false,
